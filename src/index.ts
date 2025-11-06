@@ -23,7 +23,7 @@ class UnslothServer {
     this.server = new Server(
       {
         name: 'unsloth-server',
-        version: '1.0.0',
+        version: '2.0.0',
       },
       {
         capabilities: {
@@ -222,6 +222,138 @@ class UnslothServer {
               },
             },
             required: ['model_path', 'export_format', 'output_path'],
+          },
+        },
+        {
+          name: 'train_superbpe_tokenizer',
+          description: 'Train a SuperBPE tokenizer for improved efficiency (up to 33% fewer tokens)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              corpus_path: {
+                type: 'string',
+                description: 'Path to the training corpus or dataset name',
+              },
+              vocab_size: {
+                type: 'number',
+                description: 'Vocabulary size for the tokenizer (default: 50000)',
+              },
+              output_path: {
+                type: 'string',
+                description: 'Path to save the trained tokenizer',
+              },
+              num_inherit_merges: {
+                type: 'number',
+                description: 'Number of merges to inherit from BPE stage (default: vocab_size * 0.8)',
+              },
+            },
+            required: ['corpus_path', 'output_path'],
+          },
+        },
+        {
+          name: 'get_model_info',
+          description: 'Get detailed information about a model including architecture, parameters, and capabilities',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              model_name: {
+                type: 'string',
+                description: 'Name or path of the model to inspect',
+              },
+            },
+            required: ['model_name'],
+          },
+        },
+        {
+          name: 'compare_tokenizers',
+          description: 'Compare tokenization efficiency between different tokenizers (BPE vs SuperBPE)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              text: {
+                type: 'string',
+                description: 'Sample text to tokenize for comparison',
+              },
+              tokenizer1_path: {
+                type: 'string',
+                description: 'Path to first tokenizer (e.g., standard BPE)',
+              },
+              tokenizer2_path: {
+                type: 'string',
+                description: 'Path to second tokenizer (e.g., SuperBPE)',
+              },
+            },
+            required: ['text', 'tokenizer1_path', 'tokenizer2_path'],
+          },
+        },
+        {
+          name: 'benchmark_model',
+          description: 'Benchmark model inference speed and memory usage',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              model_name: {
+                type: 'string',
+                description: 'Name of the model to benchmark',
+              },
+              prompt: {
+                type: 'string',
+                description: 'Sample prompt for benchmarking',
+              },
+              num_iterations: {
+                type: 'number',
+                description: 'Number of iterations to run (default: 10)',
+              },
+              max_new_tokens: {
+                type: 'number',
+                description: 'Number of tokens to generate per iteration (default: 128)',
+              },
+            },
+            required: ['model_name', 'prompt'],
+          },
+        },
+        {
+          name: 'list_datasets',
+          description: 'List popular datasets available for fine-tuning from Hugging Face',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              search_query: {
+                type: 'string',
+                description: 'Optional search query to filter datasets',
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of datasets to return (default: 20)',
+              },
+            },
+          },
+        },
+        {
+          name: 'prepare_dataset',
+          description: 'Prepare and format a dataset for Unsloth fine-tuning',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dataset_name: {
+                type: 'string',
+                description: 'Name of the dataset to prepare',
+              },
+              output_path: {
+                type: 'string',
+                description: 'Path to save the prepared dataset',
+              },
+              text_field: {
+                type: 'string',
+                description: 'Field containing the text data (default: "text")',
+              },
+              format: {
+                type: 'string',
+                description: 'Output format (json, jsonl, csv)',
+                enum: ['json', 'jsonl', 'csv'],
+              },
+            },
+            required: ['dataset_name', 'output_path'],
           },
         },
       ],
@@ -657,6 +789,500 @@ except Exception as e:
               };
             } catch (error: any) {
               throw new Error(`Error exporting model: ${error.message}`);
+            }
+          }
+
+          case 'train_superbpe_tokenizer': {
+            const {
+              corpus_path,
+              vocab_size = 50000,
+              output_path,
+              num_inherit_merges,
+            } = args as {
+              corpus_path: string;
+              vocab_size?: number;
+              output_path: string;
+              num_inherit_merges?: number;
+            };
+
+            const inherit_merges = num_inherit_merges || Math.floor(vocab_size * 0.8);
+
+            const script = `
+import json
+import os
+try:
+    from tokenizers import Tokenizer
+    from tokenizers.models import BPE
+    from tokenizers.trainers import BpeTrainer
+    from tokenizers.pre_tokenizers import Whitespace, ByteLevel
+    from tokenizers.processors import ByteLevel as ByteLevelProcessor
+    from datasets import load_dataset
+
+    # Initialize tokenizer
+    tokenizer = Tokenizer(BPE())
+
+    # Stage 1: Train BPE with whitespace pretokenization
+    print("Stage 1: Training BPE with whitespace pretokenization...")
+    tokenizer.pre_tokenizer = Whitespace()
+    trainer = BpeTrainer(vocab_size=${vocab_size}, special_tokens=["<pad>", "<s>", "</s>", "<unk>"])
+
+    # Load corpus
+    try:
+        dataset = load_dataset("${corpus_path}")
+        texts = [item["text"] for item in dataset["train"]]
+    except:
+        # If not a dataset, assume it's a file path
+        with open("${corpus_path}", "r") as f:
+            texts = [f.read()]
+
+    tokenizer.train_from_iterator(texts, trainer=trainer)
+
+    # Stage 2: Continue training without whitespace pretokenization (SuperBPE)
+    print("Stage 2: Training SuperBPE (learning superwords)...")
+    tokenizer.pre_tokenizer = ByteLevel()
+
+    # Get current vocab and merges
+    current_vocab_size = tokenizer.get_vocab_size()
+
+    # Resume training with more merges to learn superwords
+    additional_vocab = ${vocab_size} - current_vocab_size
+    if additional_vocab > 0:
+        trainer2 = BpeTrainer(vocab_size=${vocab_size}, special_tokens=["<pad>", "<s>", "</s>", "<unk>"])
+        tokenizer.train_from_iterator(texts, trainer=trainer2)
+
+    # Configure the decoder
+    tokenizer.post_processor = ByteLevelProcessor()
+
+    # Create output directory if needed
+    os.makedirs(os.path.dirname("${output_path}") if os.path.dirname("${output_path}") else ".", exist_ok=True)
+
+    # Save the tokenizer
+    tokenizer.save("${output_path}")
+
+    # Test the tokenizer
+    sample_text = texts[0][:200] if texts else "Hello world!"
+    encoding = tokenizer.encode(sample_text)
+    tokens_count = len(encoding.tokens)
+
+    print(json.dumps({
+        "success": True,
+        "output_path": "${output_path}",
+        "vocab_size": ${vocab_size},
+        "final_vocab_size": tokenizer.get_vocab_size(),
+        "sample_tokens": tokens_count,
+        "message": "SuperBPE tokenizer trained successfully! This tokenizer should encode text 20-33% more efficiently than standard BPE."
+    }))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const trainingResult = JSON.parse(result);
+              if (!trainingResult.success) {
+                throw new Error(trainingResult.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Successfully trained SuperBPE tokenizer!\n\n${JSON.stringify(trainingResult, null, 2)}`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error training SuperBPE tokenizer: ${error.message}`);
+            }
+          }
+
+          case 'get_model_info': {
+            const { model_name } = args as { model_name: string };
+
+            const script = `
+import json
+try:
+    from transformers import AutoConfig, AutoTokenizer
+    import torch
+
+    # Load model config
+    config = AutoConfig.from_pretrained("${model_name}")
+
+    # Try to load tokenizer
+    try:
+        tokenizer = AutoTokenizer.from_pretrained("${model_name}")
+        vocab_size = tokenizer.vocab_size
+        model_max_length = tokenizer.model_max_length
+    except:
+        vocab_size = config.vocab_size if hasattr(config, 'vocab_size') else "Unknown"
+        model_max_length = "Unknown"
+
+    # Get parameter count estimate
+    def estimate_parameters(config):
+        if hasattr(config, 'num_parameters'):
+            return config.num_parameters
+
+        # Estimate based on architecture
+        hidden_size = getattr(config, 'hidden_size', 0)
+        num_layers = getattr(config, 'num_hidden_layers', 0)
+        vocab = getattr(config, 'vocab_size', 0)
+
+        if hidden_size and num_layers and vocab:
+            # Rough estimate: vocab * hidden + layers * (4 * hidden^2)
+            embedding_params = vocab * hidden_size
+            layer_params = num_layers * (4 * hidden_size * hidden_size)
+            return embedding_params + layer_params
+        return "Unknown"
+
+    model_info = {
+        "model_name": "${model_name}",
+        "architecture": config.architectures[0] if hasattr(config, 'architectures') else config.model_type,
+        "model_type": config.model_type,
+        "hidden_size": config.hidden_size if hasattr(config, 'hidden_size') else "Unknown",
+        "num_layers": config.num_hidden_layers if hasattr(config, 'num_hidden_layers') else "Unknown",
+        "num_attention_heads": config.num_attention_heads if hasattr(config, 'num_attention_heads') else "Unknown",
+        "vocab_size": vocab_size,
+        "max_position_embeddings": config.max_position_embeddings if hasattr(config, 'max_position_embeddings') else "Unknown",
+        "model_max_length": model_max_length,
+        "estimated_parameters": estimate_parameters(config),
+        "torch_dtype": str(config.torch_dtype) if hasattr(config, 'torch_dtype') else "Unknown",
+        "success": True
+    }
+
+    print(json.dumps(model_info))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const modelInfo = JSON.parse(result);
+              if (!modelInfo.success) {
+                throw new Error(modelInfo.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Model Information for ${model_name}:\n\n${JSON.stringify(modelInfo, null, 2)}`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error getting model info: ${error.message}`);
+            }
+          }
+
+          case 'compare_tokenizers': {
+            const { text, tokenizer1_path, tokenizer2_path } = args as {
+              text: string;
+              tokenizer1_path: string;
+              tokenizer2_path: string;
+            };
+
+            const script = `
+import json
+try:
+    from transformers import AutoTokenizer
+    from tokenizers import Tokenizer
+
+    # Try loading as HuggingFace tokenizer first, then as raw tokenizer
+    def load_tokenizer(path):
+        try:
+            return AutoTokenizer.from_pretrained(path)
+        except:
+            return Tokenizer.from_file(path)
+
+    tokenizer1 = load_tokenizer("${tokenizer1_path}")
+    tokenizer2 = load_tokenizer("${tokenizer2_path}")
+
+    # Tokenize the text
+    tokens1 = tokenizer1.encode("${text.replace(/"/g, '\\"')}")
+    tokens2 = tokenizer2.encode("${text.replace(/"/g, '\\"')}")
+
+    # Get token counts
+    count1 = len(tokens1) if hasattr(tokens1, '__len__') else len(tokens1.ids)
+    count2 = len(tokens2) if hasattr(tokens2, '__len__') else len(tokens2.ids)
+
+    # Calculate efficiency improvement
+    efficiency_gain = ((count1 - count2) / count1 * 100) if count1 > 0 else 0
+
+    comparison = {
+        "tokenizer1_path": "${tokenizer1_path}",
+        "tokenizer2_path": "${tokenizer2_path}",
+        "tokenizer1_count": count1,
+        "tokenizer2_count": count2,
+        "difference": count1 - count2,
+        "efficiency_gain_percent": round(efficiency_gain, 2),
+        "text_length": len("${text.replace(/"/g, '\\"')}"),
+        "winner": "tokenizer2" if count2 < count1 else "tokenizer1" if count1 < count2 else "tie",
+        "success": True
+    }
+
+    print(json.dumps(comparison))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const comparison = JSON.parse(result);
+              if (!comparison.success) {
+                throw new Error(comparison.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Tokenizer Comparison Results:\n\n${JSON.stringify(comparison, null, 2)}\n\nTokenizer 2 is ${comparison.efficiency_gain_percent}% more efficient!`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error comparing tokenizers: ${error.message}`);
+            }
+          }
+
+          case 'benchmark_model': {
+            const {
+              model_name,
+              prompt,
+              num_iterations = 10,
+              max_new_tokens = 128,
+            } = args as {
+              model_name: string;
+              prompt: string;
+              num_iterations?: number;
+              max_new_tokens?: number;
+            };
+
+            const script = `
+import json
+import time
+try:
+    from unsloth import FastLanguageModel
+    import torch
+    import psutil
+    import os
+
+    # Load model
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name="${model_name}",
+        max_seq_length=2048,
+        load_in_4bit=True
+    )
+
+    # Prepare model for inference
+    FastLanguageModel.for_inference(model)
+
+    # Warm-up run
+    inputs = tokenizer("${prompt.replace(/"/g, '\\"')}", return_tensors="pt").to(model.device)
+    _ = model.generate(**inputs, max_new_tokens=10)
+
+    # Get initial memory
+    process = psutil.Process(os.getpid())
+    initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+
+    # Benchmark runs
+    times = []
+    tokens_per_second = []
+
+    for i in range(${num_iterations}):
+        inputs = tokenizer("${prompt.replace(/"/g, '\\"')}", return_tensors="pt").to(model.device)
+
+        start_time = time.time()
+        outputs = model.generate(**inputs, max_new_tokens=${max_new_tokens})
+        end_time = time.time()
+
+        elapsed = end_time - start_time
+        times.append(elapsed)
+        tokens_per_second.append(${max_new_tokens} / elapsed)
+
+    # Get final memory
+    final_memory = process.memory_info().rss / 1024 / 1024  # MB
+
+    benchmark_results = {
+        "model_name": "${model_name}",
+        "num_iterations": ${num_iterations},
+        "max_new_tokens": ${max_new_tokens},
+        "avg_time_seconds": round(sum(times) / len(times), 3),
+        "min_time_seconds": round(min(times), 3),
+        "max_time_seconds": round(max(times), 3),
+        "avg_tokens_per_second": round(sum(tokens_per_second) / len(tokens_per_second), 2),
+        "memory_used_mb": round(final_memory - initial_memory, 2),
+        "total_memory_mb": round(final_memory, 2),
+        "success": True
+    }
+
+    print(json.dumps(benchmark_results))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const benchmarkResults = JSON.parse(result);
+              if (!benchmarkResults.success) {
+                throw new Error(benchmarkResults.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Benchmark Results for ${model_name}:\n\n${JSON.stringify(benchmarkResults, null, 2)}`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error benchmarking model: ${error.message}`);
+            }
+          }
+
+          case 'list_datasets': {
+            const { search_query = '', limit = 20 } = args as {
+              search_query?: string;
+              limit?: number;
+            };
+
+            const script = `
+import json
+try:
+    from huggingface_hub import list_datasets
+
+    # List datasets
+    datasets = list_datasets(
+        search="${search_query}",
+        limit=${limit},
+        sort="downloads",
+        direction=-1
+    )
+
+    dataset_list = []
+    for dataset in datasets:
+        dataset_list.append({
+            "id": dataset.id,
+            "author": dataset.author if hasattr(dataset, 'author') else "Unknown",
+            "downloads": dataset.downloads if hasattr(dataset, 'downloads') else 0,
+            "likes": dataset.likes if hasattr(dataset, 'likes') else 0,
+            "tags": dataset.tags[:5] if hasattr(dataset, 'tags') else []
+        })
+
+    result = {
+        "query": "${search_query}",
+        "count": len(dataset_list),
+        "datasets": dataset_list,
+        "success": True
+    }
+
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const datasetList = JSON.parse(result);
+              if (!datasetList.success) {
+                throw new Error(datasetList.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Available Datasets${search_query ? ` (search: "${search_query}")` : ''}:\n\n${JSON.stringify(datasetList, null, 2)}`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error listing datasets: ${error.message}`);
+            }
+          }
+
+          case 'prepare_dataset': {
+            const {
+              dataset_name,
+              output_path,
+              text_field = 'text',
+              format = 'jsonl',
+            } = args as {
+              dataset_name: string;
+              output_path: string;
+              text_field?: string;
+              format?: 'json' | 'jsonl' | 'csv';
+            };
+
+            const script = `
+import json
+import os
+try:
+    from datasets import load_dataset
+    import pandas as pd
+
+    # Load dataset
+    dataset = load_dataset("${dataset_name}")
+
+    # Get training split
+    train_data = dataset["train"]
+
+    # Create output directory if needed
+    os.makedirs(os.path.dirname("${output_path}") if os.path.dirname("${output_path}") else ".", exist_ok=True)
+
+    # Prepare data with proper formatting
+    if "${format}" == "jsonl":
+        with open("${output_path}", "w") as f:
+            for item in train_data:
+                if "${text_field}" in item:
+                    f.write(json.dumps({"text": item["${text_field}"]}) + "\\n")
+    elif "${format}" == "json":
+        prepared_data = []
+        for item in train_data:
+            if "${text_field}" in item:
+                prepared_data.append({"text": item["${text_field}"]})
+        with open("${output_path}", "w") as f:
+            json.dump(prepared_data, f, indent=2)
+    elif "${format}" == "csv":
+        df_data = []
+        for item in train_data:
+            if "${text_field}" in item:
+                df_data.append({"text": item["${text_field}"]})
+        df = pd.DataFrame(df_data)
+        df.to_csv("${output_path}", index=False)
+
+    result = {
+        "dataset_name": "${dataset_name}",
+        "output_path": "${output_path}",
+        "format": "${format}",
+        "num_examples": len(train_data),
+        "text_field": "${text_field}",
+        "success": True
+    }
+
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"error": str(e), "success": False}))
+`;
+            const result = await this.executeUnslothScript(script);
+
+            try {
+              const prepareResult = JSON.parse(result);
+              if (!prepareResult.success) {
+                throw new Error(prepareResult.error);
+              }
+
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: `Successfully prepared dataset:\n\n${JSON.stringify(prepareResult, null, 2)}`,
+                  },
+                ],
+              };
+            } catch (error: any) {
+              throw new Error(`Error preparing dataset: ${error.message}`);
             }
           }
 

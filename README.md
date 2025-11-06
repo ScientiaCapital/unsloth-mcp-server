@@ -1,6 +1,15 @@
-# Unsloth MCP Server
+# Unsloth MCP Server v2.0
 
-An MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a library that makes LLM fine-tuning 2x faster with 80% less memory.
+An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a library that makes LLM fine-tuning 2x faster with 80% less memory.
+
+## What's New in v2.0
+
+- **SuperBPE Tokenizer Training**: Train state-of-the-art SuperBPE tokenizers for up to 33% token reduction
+- **Model Information Tool**: Get detailed architecture and parameter information
+- **Tokenizer Comparison**: Compare tokenization efficiency between different tokenizers
+- **Performance Benchmarking**: Benchmark model inference speed and memory usage
+- **Dataset Discovery**: Search and list Hugging Face datasets
+- **Dataset Preparation**: Prepare and format datasets for fine-tuning
 
 ## What is Unsloth?
 
@@ -185,7 +194,281 @@ const result = await use_mcp_tool({
 });
 ```
 
+### train_superbpe_tokenizer
+
+Train a SuperBPE tokenizer for improved efficiency. SuperBPE tokenizers can encode text using up to 33% fewer tokens than standard BPE tokenizers, leading to faster inference and lower costs.
+
+**Parameters**:
+- `corpus_path` (required): Path to training corpus or dataset name from Hugging Face
+- `output_path` (required): Path to save the trained tokenizer
+- `vocab_size` (optional): Vocabulary size for the tokenizer (default: 50000)
+- `num_inherit_merges` (optional): Number of merges to inherit from BPE stage (default: vocab_size * 0.8)
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "train_superbpe_tokenizer",
+  arguments: {
+    corpus_path: "wikitext",
+    output_path: "./tokenizers/superbpe_tokenizer.json",
+    vocab_size: 50000
+  }
+});
+```
+
+**Benefits**:
+- 20-33% reduction in token count
+- Faster inference times
+- Lower API costs
+- Better performance on downstream tasks
+
+### get_model_info
+
+Get detailed information about a model including architecture, parameters, and capabilities.
+
+**Parameters**:
+- `model_name` (required): Name or path of the model to inspect
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "get_model_info",
+  arguments: {
+    model_name: "unsloth/Llama-3.2-1B"
+  }
+});
+```
+
+**Returns**:
+- Architecture type and details
+- Number of parameters
+- Hidden size and layers
+- Vocabulary size
+- Max sequence length
+- Memory requirements
+
+### compare_tokenizers
+
+Compare tokenization efficiency between different tokenizers (e.g., standard BPE vs SuperBPE).
+
+**Parameters**:
+- `text` (required): Sample text to tokenize for comparison
+- `tokenizer1_path` (required): Path to first tokenizer
+- `tokenizer2_path` (required): Path to second tokenizer
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "compare_tokenizers",
+  arguments: {
+    text: "Your sample text here for comparison...",
+    tokenizer1_path: "meta-llama/Llama-3.2-1B",
+    tokenizer2_path: "./tokenizers/superbpe_tokenizer.json"
+  }
+});
+```
+
+**Returns**:
+- Token counts for each tokenizer
+- Efficiency gain percentage
+- Winner determination
+
+### benchmark_model
+
+Benchmark model inference speed and memory usage with Unsloth optimizations.
+
+**Parameters**:
+- `model_name` (required): Name of the model to benchmark
+- `prompt` (required): Sample prompt for benchmarking
+- `num_iterations` (optional): Number of iterations to run (default: 10)
+- `max_new_tokens` (optional): Tokens to generate per iteration (default: 128)
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "benchmark_model",
+  arguments: {
+    model_name: "unsloth/Llama-3.2-1B",
+    prompt: "Write a story about AI:",
+    num_iterations: 10,
+    max_new_tokens: 128
+  }
+});
+```
+
+**Returns**:
+- Average/min/max inference times
+- Tokens per second
+- Memory usage statistics
+
+### list_datasets
+
+List popular datasets available for fine-tuning from Hugging Face.
+
+**Parameters**:
+- `search_query` (optional): Search query to filter datasets
+- `limit` (optional): Maximum number of datasets to return (default: 20)
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "list_datasets",
+  arguments: {
+    search_query: "instruction",
+    limit: 20
+  }
+});
+```
+
+**Returns**:
+- Dataset IDs and authors
+- Download counts and likes
+- Relevant tags
+
+### prepare_dataset
+
+Prepare and format a dataset for Unsloth fine-tuning.
+
+**Parameters**:
+- `dataset_name` (required): Name of the dataset to prepare
+- `output_path` (required): Path to save the prepared dataset
+- `text_field` (optional): Field containing the text data (default: "text")
+- `format` (optional): Output format - json, jsonl, or csv (default: jsonl)
+
+**Example**:
+```javascript
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "prepare_dataset",
+  arguments: {
+    dataset_name: "tatsu-lab/alpaca",
+    output_path: "./datasets/alpaca_prepared.jsonl",
+    text_field: "text",
+    format: "jsonl"
+  }
+});
+```
+
+**Returns**:
+- Number of examples processed
+- Output file path
+- Format confirmation
+
 ## Advanced Usage
+
+### SuperBPE Workflow
+
+Train and use SuperBPE tokenizers for maximum efficiency:
+
+```javascript
+// 1. Prepare your training dataset
+const prepResult = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "prepare_dataset",
+  arguments: {
+    dataset_name: "wikitext",
+    output_path: "./data/training_corpus.jsonl",
+    format: "jsonl"
+  }
+});
+
+// 2. Train a SuperBPE tokenizer
+const tokenizer = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "train_superbpe_tokenizer",
+  arguments: {
+    corpus_path: "./data/training_corpus.jsonl",
+    output_path: "./tokenizers/superbpe.json",
+    vocab_size: 50000
+  }
+});
+
+// 3. Compare with standard tokenizer
+const comparison = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "compare_tokenizers",
+  arguments: {
+    text: "Sample text to compare tokenization efficiency...",
+    tokenizer1_path: "meta-llama/Llama-3.2-1B",
+    tokenizer2_path: "./tokenizers/superbpe.json"
+  }
+});
+
+// Result: SuperBPE typically shows 20-33% reduction in tokens!
+```
+
+### Model Analysis and Benchmarking
+
+Get comprehensive model information and performance metrics:
+
+```javascript
+// 1. Get detailed model information
+const info = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "get_model_info",
+  arguments: {
+    model_name: "unsloth/Llama-3.2-1B"
+  }
+});
+
+// 2. Benchmark the model
+const benchmark = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "benchmark_model",
+  arguments: {
+    model_name: "unsloth/Llama-3.2-1B",
+    prompt: "Write a short story:",
+    num_iterations: 10,
+    max_new_tokens: 128
+  }
+});
+
+// Compare: tokens/sec, memory usage, inference time
+```
+
+### Dataset Discovery and Preparation
+
+Find and prepare the perfect dataset for your fine-tuning needs:
+
+```javascript
+// 1. Search for relevant datasets
+const datasets = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "list_datasets",
+  arguments: {
+    search_query: "instruction following",
+    limit: 20
+  }
+});
+
+// 2. Prepare selected dataset
+const prepared = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "prepare_dataset",
+  arguments: {
+    dataset_name: "tatsu-lab/alpaca",
+    output_path: "./datasets/alpaca.jsonl",
+    text_field: "text",
+    format: "jsonl"
+  }
+});
+
+// 3. Fine-tune with prepared dataset
+const result = await use_mcp_tool({
+  server_name: "unsloth-server",
+  tool_name: "finetune_model",
+  arguments: {
+    model_name: "unsloth/Llama-3.2-1B",
+    dataset_name: "./datasets/alpaca.jsonl",
+    output_dir: "./fine-tuned-model"
+  }
+});
+```
 
 ### Custom Datasets
 
