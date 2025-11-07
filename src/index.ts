@@ -10,6 +10,10 @@ import {
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import axios from 'axios';
+import logger from './utils/logger.js';
+import { validateToolInputs, ValidationError } from './utils/validation.js';
+import { safeExecute, SecurityError, TimeoutError } from './utils/security.js';
+import { metricsCollector } from './utils/metrics.js';
 
 const execPromise = promisify(exec);
 
@@ -34,34 +38,62 @@ class UnslothServer {
 
     // Set up tool handlers
     this.setupToolHandlers();
-    
+
     // Error handling
-    this.server.onerror = (error) => console.error('[MCP Error]', error);
+    this.server.onerror = (error) => {
+      logger.error('[MCP Error]', { error: error.message, stack: error.stack });
+    };
+
     process.on('SIGINT', async () => {
+      logger.info('Received SIGINT, shutting down gracefully...');
       await this.server.close();
+      logger.info('Server closed successfully');
       process.exit(0);
     });
+
+    logger.info('Unsloth MCP Server initialized', { version: '2.0.0' });
   }
 
   private async checkUnslothInstallation(): Promise<boolean> {
     try {
+      logger.debug('Checking Unsloth installation');
       await execPromise('python -c "import unsloth"');
+      logger.info('Unsloth is installed');
       return true;
     } catch (error) {
+      logger.warn('Unsloth is not installed', { error });
       return false;
     }
   }
 
   private async executeUnslothScript(script: string): Promise<string> {
     try {
-      const { stdout, stderr } = await execPromise(`python -c "${script}"`);
-      if (stderr && !stdout) {
-        throw new Error(stderr);
-      }
-      return stdout;
+      logger.debug('Executing Unsloth script', { scriptLength: script.length });
+      const result = await safeExecute(script);
+      logger.debug('Script execution successful');
+      return result;
     } catch (error: any) {
+      if (error instanceof TimeoutError) {
+        throw new Error(`Operation timed out: ${error.message}. Try reducing the workload or increasing timeout.`);
+      }
+      if (error instanceof SecurityError) {
+        throw new Error(`Security error: ${error.message}`);
+      }
+      logger.error('Script execution failed', { error: error.message });
       throw new Error(`Error executing Unsloth script: ${error.message}`);
     }
+  }
+
+  private createSuccessResponse(toolName: string, startTime: number, text: string) {
+    metricsCollector.endTool(toolName, startTime, true);
+    return {
+      content: [
+        {
+          type: 'text',
+          text,
+        },
+      ],
+    };
   }
 
   private setupToolHandlers() {
@@ -361,8 +393,14 @@ class UnslothServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      const startTime = metricsCollector.startTool(name);
+
+      logger.info(`Tool called: ${name}`, { args });
 
       try {
+        // Validate inputs
+        validateToolInputs(name, args || {});
+
         switch (name) {
           case 'check_installation': {
             const isInstalled = await this.checkUnslothInstallation();
@@ -1293,17 +1331,74 @@ except Exception as e:
             );
         }
       } catch (error: any) {
-        console.error(`Error executing tool ${name}:`, error);
-        
+        // Track failed execution
+        metricsCollector.endTool(name, startTime, false, error.message);
+
+        logger.error(`Error executing tool ${name}`, {
+          error: error.message,
+          stack: error.stack,
+          toolName: name,
+        });
+
+        let errorMessage = error.message || 'Unknown error';
+        let suggestions: string[] = [];
+
+        // Provide helpful error messages based on error type
+        if (error instanceof ValidationError) {
+          errorMessage = `Validation error: ${error.message}`;
+          if (error.suggestions) {
+            suggestions = error.suggestions;
+          }
+        } else if (error instanceof TimeoutError) {
+          errorMessage = `Timeout error: ${error.message}`;
+          suggestions = [
+            'Try reducing the workload size',
+            'Consider processing in smaller batches',
+            'Check if Python dependencies are installed correctly',
+          ];
+        } else if (error instanceof SecurityError) {
+          errorMessage = `Security error: ${error.message}`;
+          suggestions = ['Check file paths and permissions', 'Ensure input is properly formatted'];
+        } else if (error.message.includes('ENOENT') || error.message.includes('not found')) {
+          errorMessage = `File or resource not found: ${error.message}`;
+          suggestions = [
+            'Check that the file path is correct',
+            'Ensure the file exists before proceeding',
+            'Use absolute paths when possible',
+          ];
+        } else if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+          errorMessage = `Permission denied: ${error.message}`;
+          suggestions = [
+            'Check file permissions',
+            'Ensure you have write access to the output directory',
+            'Try using a different output location',
+          ];
+        } else if (error.message.includes('Out of memory') || error.message.includes('OOM')) {
+          errorMessage = `Out of memory: ${error.message}`;
+          suggestions = [
+            'Try using 4-bit quantization (load_in_4bit=true)',
+            'Reduce batch size',
+            'Use a smaller model',
+            'Increase available RAM or use a machine with more memory',
+          ];
+        }
+
+        const responseText = suggestions.length > 0
+          ? `${errorMessage}\n\nSuggestions:\n${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+          : errorMessage;
+
         return {
           content: [
             {
               type: 'text',
-              text: `Error: ${error.message || 'Unknown error'}`,
+              text: responseText,
             },
           ],
           isError: true,
         };
+      } finally {
+        // Always track completion (success is tracked in the try block per tool)
+        // This ensures metrics are recorded even if we don't explicitly track success
       }
     });
   }
