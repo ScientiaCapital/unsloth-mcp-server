@@ -1,446 +1,633 @@
 ---
 name: unsloth-tokenizer
-description: Train SuperBPE tokenizers for 20-33% token reduction, compare tokenizers, and optimize token efficiency. Use when the user wants to reduce API costs, improve context window usage, or train custom tokenizers.
+description: Analyze, compare, and work with tokenizers using Unsloth tools. Compare different tokenizers, analyze token efficiency, and integrate with Unsloth models. For SuperBPE training, see the 'superbpe' skill.
 ---
 
-# Unsloth Tokenizer & SuperBPE
+# Unsloth Tokenizer Tools
 
-Expert guidance for tokenizer training and optimization using Unsloth's SuperBPE technology.
+Expert guidance for tokenizer comparison, analysis, and integration using Unsloth's tokenizer utilities.
 
-## What is SuperBPE?
+## Overview
 
-SuperBPE is a 2025 tokenization method that achieves:
+Unsloth provides powerful tools for:
 
-- **20-33% fewer tokens** than standard BPE
-- **Faster inference** (fewer tokens to process)
-- **Lower API costs** (pay per token)
-- **Better context utilization** (fit more in same window)
+- **Comparing tokenizers** - Measure token efficiency across different tokenizers
+- **Analyzing tokenization** - Understand how text is tokenized
+- **Integration** - Use tokenizers with Unsloth models
+- **Optimization** - Find the most efficient tokenizer for your use case
+
+> **Note**: For SuperBPE tokenizer training, see the dedicated `superbpe` skill.
 
 ## Quick Start
 
-### Train SuperBPE Tokenizer
-
-```python
-from unsloth.tokenizer import train_superbpe
-
-tokenizer = train_superbpe(
-    corpus_path="./training_data.txt",    # or HF dataset name
-    output_path="./tokenizers/my_tokenizer.json",
-    vocab_size=50000,
-    num_inherit_merges=40000  # 80% of vocab_size
-)
-```
-
-### Compare Tokenizers
+### Compare Two Tokenizers
 
 ```python
 from unsloth.tokenizer import compare_tokenizers
 
-# Compare standard BPE with your SuperBPE
 results = compare_tokenizers(
-    text="Your sample text here...",
+    text="The quick brown fox jumps over the lazy dog",
     tokenizer1="meta-llama/Llama-3.2-1B",
-    tokenizer2="./tokenizers/my_tokenizer.json"
+    tokenizer2="gpt2"
 )
 
-print(f"Standard BPE: {results['tokenizer1']['tokens']} tokens")
-print(f"SuperBPE: {results['tokenizer2']['tokens']} tokens")
-print(f"Reduction: {results['reduction']}")
+print(f"Llama-3.2: {results['tokenizer1']['tokens']} tokens")
+print(f"GPT-2: {results['tokenizer2']['tokens']} tokens")
+print(f"Difference: {results['reduction']}")
+```
+
+### Analyze Tokenization
+
+```python
+from unsloth.tokenizer import analyze_tokenization
+
+analysis = analyze_tokenization(
+    text="Your text here...",
+    tokenizer="meta-llama/Llama-3.2-1B"
+)
+
+print(f"Total tokens: {analysis['total_tokens']}")
+print(f"Unique tokens: {analysis['unique_tokens']}")
+print(f"Token breakdown: {analysis['tokens']}")
+```
+
+### Batch Compare Multiple Tokenizers
+
+```python
+from unsloth.tokenizer import compare_multiple_tokenizers
+
+tokenizers = [
+    "meta-llama/Llama-3.2-1B",
+    "meta-llama/Llama-3.2-3B",
+    "mistralai/Mistral-7B-v0.1",
+    "gpt2",
+    "./tokenizers/custom_superbpe.json"
+]
+
+results = compare_multiple_tokenizers(
+    text="Your text...",
+    tokenizers=tokenizers
+)
+
+# Results sorted by efficiency
+for result in results:
+    print(f"{result['name']}: {result['tokens']} tokens")
 ```
 
 ## Use Cases
 
-### 1. Reduce API Costs
+### 1. Find Most Efficient Tokenizer
 
-**Problem:** High API bills due to token usage
-
-**Solution:**
-
-```python
-# Train domain-specific SuperBPE
-tokenizer = train_superbpe(
-    corpus_path="your_domain_corpus.txt",  # Your specific domain
-    output_path="./tokenizers/domain_tokenizer.json",
-    vocab_size=50000
-)
-
-# Typical savings: 20-33% fewer tokens
-# $1000/month → $700-800/month
-```
-
-### 2. Maximize Context Window
-
-**Problem:** Running out of context window space
+**Problem:** Need to choose the best tokenizer for your use case
 
 **Solution:**
 
 ```python
-# Standard tokenizer: 8K tokens = ~6K words
-# SuperBPE: 8K tokens = ~8.5K words
-# 40% more content in same window!
-
-tokenizer = train_superbpe(
-    corpus_path="wikitext",
-    vocab_size=50000
-)
-```
-
-### 3. Domain-Specific Efficiency
-
-**Problem:** Generic tokenizers waste tokens on domain-specific terms
-
-**Solution:**
-
-```python
-# Medical example
-tokenizer = train_superbpe(
-    corpus_path="medical_meadow_medical_flashcards",
-    output_path="./tokenizers/medical_tokenizer.json",
-    vocab_size=32000  # Smaller for domain-specific
-)
-
-# "electrocardiogram" → 1 token instead of 5
-# "myocardial infarction" → 2 tokens instead of 6
-```
-
-## Training Corpus Selection
-
-### General Purpose Tokenizer
-
-```python
-# Use diverse, high-quality text
-corpus_sources = [
-    "wikitext",
-    "c4",  # Common Crawl
-    "bookcorpus"
+# Test multiple candidates
+candidates = [
+    "meta-llama/Llama-3.2-1B",
+    "mistralai/Mistral-7B-v0.1",
+    "google/gemma-2b",
+    "./tokenizers/custom_superbpe.json"
 ]
 
-# Combine multiple sources
-tokenizer = train_superbpe(
-    corpus_path=combined_corpus,
-    vocab_size=50000
+# Use representative sample
+sample_text = get_production_sample(size_kb=100)
+
+results = compare_multiple_tokenizers(
+    text=sample_text,
+    tokenizers=candidates
 )
+
+# Choose most efficient
+best = min(results, key=lambda x: x['tokens'])
+print(f"Best tokenizer: {best['name']} with {best['tokens']} tokens")
 ```
 
-### Domain-Specific Tokenizer
+### 2. Analyze Domain-Specific Tokenization
+
+**Problem:** Understand how your domain-specific text is tokenized
+
+**Solution:**
 
 ```python
-# Use domain-specific corpus
-domains = {
-    "medical": "medical_meadow",
-    "legal": "legal_contracts_dataset",
-    "code": "codeparrot/github-code",
-    "financial": "financial_phrasebank"
+# Medical text example
+medical_text = """
+Patient presents with acute myocardial infarction.
+ECG shows ST-segment elevation. Troponin elevated.
+"""
+
+analysis = analyze_tokenization(
+    text=medical_text,
+    tokenizer="meta-llama/Llama-3.2-1B",
+    show_breakdown=True
+)
+
+# Check how medical terms are tokenized
+for term in ["myocardial", "infarction", "troponin"]:
+    tokens = analysis['term_breakdown'][term]
+    print(f"{term} → {tokens} (fragmented)" if len(tokens) > 1 else f"{term} → 1 token (good)")
+```
+
+### 3. Estimate API Costs
+
+**Problem:** Predict API costs before making calls
+
+**Solution:**
+
+```python
+from unsloth.tokenizer import estimate_tokens
+
+# Your prompt
+prompt = """
+Your long prompt here...
+"""
+
+# Estimate for different APIs
+estimates = {
+    "OpenAI GPT-4": estimate_tokens(prompt, "gpt2") * 0.00003,  # $30 per 1M
+    "Anthropic Claude": estimate_tokens(prompt, "gpt2") * 0.000015,  # $15 per 1M
+    "Llama-3.2": estimate_tokens(prompt, "meta-llama/Llama-3.2-1B") * 0.000001  # Self-hosted
 }
 
-tokenizer = train_superbpe(
-    corpus_path=domains["medical"],
-    vocab_size=32000  # Smaller vocab for specific domains
-)
+for api, cost in estimates.items():
+    print(f"{api}: ~${cost:.4f}")
 ```
 
-## Vocab Size Guidelines
+### 4. Validate Custom Tokenizer
 
-| Use Case             | Vocab Size      | Rationale           |
-| -------------------- | --------------- | ------------------- |
-| General purpose      | 50,000-100,000  | Maximum flexibility |
-| Domain-specific      | 16,000-32,000   | Focused vocabulary  |
-| Multilingual         | 100,000-250,000 | Many languages      |
-| Resource-constrained | 8,000-16,000    | Smaller model size  |
+**Problem:** After training a custom tokenizer, validate it's better
 
-## Performance Comparison
-
-### Example: Technical Documentation
+**Solution:**
 
 ```python
-text = """
-The implementation utilizes a convolutional neural network
-architecture with residual connections and batch normalization.
-The model achieves state-of-the-art performance on ImageNet.
-"""
+# Compare your custom tokenizer with baseline
+test_corpus = load_test_corpus()
 
-# Standard BPE: 45 tokens
-# SuperBPE: 31 tokens
-# Reduction: 31% fewer tokens
+baseline_tokens = 0
+custom_tokens = 0
+
+for sample in test_corpus:
+    result = compare_tokenizers(
+        text=sample,
+        tokenizer1="meta-llama/Llama-3.2-1B",  # Baseline
+        tokenizer2="./tokenizers/my_custom.json"  # Your tokenizer
+    )
+    baseline_tokens += result['tokenizer1']['tokens']
+    custom_tokens += result['tokenizer2']['tokens']
+
+reduction = ((baseline_tokens - custom_tokens) / baseline_tokens) * 100
+print(f"Average reduction: {reduction:.1f}%")
+print(f"Pass" if reduction >= 20 else f"Fail - needs optimization")
 ```
 
-### Example: Medical Text
+## Integration with Unsloth Models
 
-```python
-text = """
-Patient presents with acute myocardial infarction.
-ECG shows ST-segment elevation in leads II, III, and aVF.
-Troponin levels elevated at 15.2 ng/mL.
-"""
-
-# Standard BPE: 52 tokens
-# Medical SuperBPE: 34 tokens
-# Reduction: 35% fewer tokens
-```
-
-## Training Time
-
-| Corpus Size | Vocab Size | Training Time | Hardware |
-| ----------- | ---------- | ------------- | -------- |
-| 100MB       | 50K        | 10-15 min     | CPU/GPU  |
-| 500MB       | 50K        | 30-60 min     | CPU/GPU  |
-| 1GB         | 50K        | 1-2 hours     | CPU/GPU  |
-| 1GB         | 100K       | 2-3 hours     | CPU/GPU  |
-
-## Advanced Configuration
-
-### Inherit Merges
-
-```python
-# Control how many BPE merges to inherit
-tokenizer = train_superbpe(
-    corpus_path="corpus.txt",
-    vocab_size=50000,
-    num_inherit_merges=40000  # 80% (recommended)
-)
-
-# Options:
-# - 70% (35K): More aggressive, higher compression
-# - 80% (40K): Balanced (recommended)
-# - 90% (45K): Conservative, safer
-```
-
-### Custom Training Parameters
-
-```python
-tokenizer = train_superbpe(
-    corpus_path="corpus.txt",
-    output_path="tokenizer.json",
-    vocab_size=50000,
-    num_inherit_merges=40000,
-    min_frequency=2,          # Minimum token frequency
-    special_tokens=[          # Custom special tokens
-        "[INST]",
-        "[/INST]",
-        "<|system|>",
-        "<|user|>",
-        "<|assistant|>"
-    ]
-)
-```
-
-## Integration with Fine-Tuning
-
-### Step 1: Train Tokenizer
-
-```python
-# Train on your domain
-tokenizer = train_superbpe(
-    corpus_path="your_corpus.txt",
-    output_path="./tokenizers/custom.json",
-    vocab_size=50000
-)
-```
-
-### Step 2: Use in Fine-Tuning
+### Load Model with Custom Tokenizer
 
 ```python
 from unsloth import FastLanguageModel
 from transformers import AutoTokenizer
 
-# Load your custom tokenizer
-custom_tokenizer = AutoTokenizer.from_pretrained(
-    "./tokenizers/custom.json"
+# Load Unsloth model
+model, default_tokenizer = FastLanguageModel.from_pretrained(
+    "unsloth/Llama-3.2-1B-bnb-4bit",
+    max_seq_length=2048,
+    load_in_4bit=True
 )
 
-# Use with fine-tuning
+# Replace with custom tokenizer
+custom_tokenizer = AutoTokenizer.from_pretrained("./tokenizers/custom.json")
+model.resize_token_embeddings(len(custom_tokenizer))
+
+# Use custom tokenizer for inference
+inputs = custom_tokenizer("Your prompt", return_tensors="pt")
+outputs = model.generate(**inputs)
+response = custom_tokenizer.decode(outputs[0])
+```
+
+### Fine-Tune with Custom Tokenizer
+
+```python
+from unsloth import FastLanguageModel
+from transformers import AutoTokenizer
+
+# Load model
 model, _ = FastLanguageModel.from_pretrained(
     "unsloth/Llama-3.2-1B-bnb-4bit",
     max_seq_length=2048
 )
 
-# Replace tokenizer
+# Load custom tokenizer
+custom_tokenizer = AutoTokenizer.from_pretrained("./tokenizers/custom.json")
+
+# Resize embeddings
 model.resize_token_embeddings(len(custom_tokenizer))
+
+# Prepare LoRA
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=16,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    lora_alpha=16,
+    lora_dropout=0,
+    bias="none",
+    use_gradient_checkpointing="unsloth"
+)
+
+# Tokenize dataset with custom tokenizer
+def tokenize_function(examples):
+    return custom_tokenizer(
+        examples["text"],
+        truncation=True,
+        max_length=2048
+    )
+
+tokenized_dataset = dataset.map(tokenize_function, batched=True)
+
+# Train with custom tokenizer
+trainer = SFTTrainer(
+    model=model,
+    tokenizer=custom_tokenizer,
+    train_dataset=tokenized_dataset,
+    # ... other trainer args
+)
+trainer.train()
 ```
 
-## ROI Calculator
+## Tokenizer Comparison Strategies
 
-### Calculate Token Savings
+### Strategy 1: Quick Single-Sample Test
+
+Fast check for one piece of text:
 
 ```python
-def calculate_savings(
-    monthly_tokens: int,
-    cost_per_million: float,
-    reduction_percent: float
-):
-    """
-    Calculate monthly savings from SuperBPE
+result = compare_tokenizers(
+    text="Your sample text",
+    tokenizer1="baseline",
+    tokenizer2="candidate"
+)
 
-    Example:
-    - 100M tokens/month
-    - $20 per 1M tokens
-    - 30% reduction
+if float(result['reduction'].strip('%')) > 10:
+    print("Candidate is more efficient")
+```
 
-    Savings: $600/month = $7,200/year
+### Strategy 2: Comprehensive Corpus Analysis
+
+Thorough evaluation across many samples:
+
+```python
+from unsloth.tokenizer import compare_on_corpus
+
+results = compare_on_corpus(
+    corpus_path="test_corpus.txt",
+    tokenizer1="meta-llama/Llama-3.2-1B",
+    tokenizer2="./tokenizers/custom.json",
+    num_samples=1000
+)
+
+print(f"Mean reduction: {results['mean_reduction']:.1f}%")
+print(f"Median reduction: {results['median_reduction']:.1f}%")
+print(f"Min: {results['min_reduction']:.1f}%, Max: {results['max_reduction']:.1f}%")
+```
+
+### Strategy 3: Domain-Specific Benchmark
+
+Test on specific domains:
+
+```python
+domains = {
+    "medical": "./corpus/medical_test.txt",
+    "legal": "./corpus/legal_test.txt",
+    "technical": "./corpus/technical_test.txt"
+}
+
+for domain_name, corpus_path in domains.items():
+    results = compare_on_corpus(
+        corpus_path=corpus_path,
+        tokenizer1="baseline",
+        tokenizer2="custom"
+    )
+    print(f"{domain_name}: {results['mean_reduction']:.1f}% reduction")
+```
+
+## Analyzing Tokenizer Efficiency
+
+### Token-to-Character Ratio
+
+Measure how efficiently a tokenizer encodes text:
+
+```python
+def calculate_efficiency(text: str, tokenizer_name: str):
     """
-    current_cost = (monthly_tokens / 1_000_000) * cost_per_million
-    new_tokens = monthly_tokens * (1 - reduction_percent / 100)
-    new_cost = (new_tokens / 1_000_000) * cost_per_million
-    savings = current_cost - new_cost
+    Calculate token-to-character ratio
+    Lower is better (fewer tokens per character)
+    """
+    from transformers import AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+    tokens = tokenizer.encode(text)
+
+    ratio = len(tokens) / len(text)
+    chars_per_token = len(text) / len(tokens)
 
     return {
-        "monthly_savings": savings,
-        "yearly_savings": savings * 12,
-        "roi_months": 0.1  # Training cost negligible
+        'tokens': len(tokens),
+        'characters': len(text),
+        'ratio': ratio,
+        'chars_per_token': chars_per_token
     }
 
-# Example
-print(calculate_savings(
-    monthly_tokens=100_000_000,
-    cost_per_million=20,
-    reduction_percent=30
-))
-# Output: {'monthly_savings': 600, 'yearly_savings': 7200, 'roi_months': 0.1}
+# Compare multiple tokenizers
+tokenizers = ["meta-llama/Llama-3.2-1B", "gpt2", "./custom.json"]
+
+for tok in tokenizers:
+    eff = calculate_efficiency(sample_text, tok)
+    print(f"{tok}: {eff['chars_per_token']:.2f} chars/token")
 ```
 
-## Validation & Testing
+### Vocabulary Coverage
 
-### Test on Representative Data
-
-```python
-# Always test on held-out data
-test_samples = [
-    "Sample 1 from your domain...",
-    "Sample 2 from your domain...",
-    "Sample 3 from your domain..."
-]
-
-for sample in test_samples:
-    result = compare_tokenizers(
-        text=sample,
-        tokenizer1="meta-llama/Llama-3.2-1B",
-        tokenizer2="./tokenizers/custom.json"
-    )
-    print(f"Reduction: {result['reduction']}")
-
-# Average should be 20-33%
-```
-
-### Quality Checks
+Check how well a tokenizer covers your domain:
 
 ```python
-# Check tokenization quality
-from transformers import AutoTokenizer
+def check_vocabulary_coverage(
+    corpus_path: str,
+    tokenizer_name: str,
+    min_frequency: int = 10
+):
+    """
+    Check what percentage of frequent terms are single tokens
+    """
+    from transformers import AutoTokenizer
+    from collections import Counter
 
-tokenizer = AutoTokenizer.from_pretrained("./tokenizers/custom.json")
+    # Load corpus
+    with open(corpus_path, 'r') as f:
+        text = f.read()
 
-# Test important terms
-important_terms = [
-    "your_domain_term_1",
-    "your_domain_term_2",
-    "common_phrase"
-]
+    # Find frequent terms
+    words = text.lower().split()
+    frequent_terms = [word for word, count in Counter(words).most_common(1000)
+                      if count >= min_frequency]
 
-for term in important_terms:
-    tokens = tokenizer.tokenize(term)
-    print(f"{term}: {len(tokens)} tokens = {tokens}")
+    # Check tokenization
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
-# Goal: Domain terms should be 1-2 tokens
+    single_token_count = 0
+    for term in frequent_terms:
+        tokens = tokenizer.tokenize(term)
+        if len(tokens) == 1:
+            single_token_count += 1
+
+    coverage = (single_token_count / len(frequent_terms)) * 100
+
+    return {
+        'total_frequent_terms': len(frequent_terms),
+        'single_token_terms': single_token_count,
+        'coverage_percent': coverage
+    }
+
+coverage = check_vocabulary_coverage(
+    corpus_path="domain_corpus.txt",
+    tokenizer_name="meta-llama/Llama-3.2-1B"
+)
+
+print(f"Vocabulary coverage: {coverage['coverage_percent']:.1f}%")
+# Target: >60% for domain-specific, >40% for general
 ```
 
 ## Common Patterns
 
-### Pattern 1: Quick Evaluation
+### Pattern 1: Tokenizer Selection for New Project
 
 ```python
-# Fast test to see potential
-sample_text = "Representative text from your domain..."
+# 1. Gather representative samples
+samples = collect_representative_samples(count=100)
 
-result = compare_tokenizers(
-    text=sample_text,
-    tokenizer1="meta-llama/Llama-3.2-1B",
-    tokenizer2="existing_tokenizer"  # If you have one
-)
+# 2. Define candidate tokenizers
+candidates = [
+    "meta-llama/Llama-3.2-1B",
+    "meta-llama/Llama-3.2-3B",
+    "mistralai/Mistral-7B-v0.1",
+    "google/gemma-2b"
+]
 
-if result['reduction'] > 20:
-    print("Worth training custom tokenizer!")
+# 3. Benchmark all candidates
+results = {}
+for candidate in candidates:
+    total_tokens = 0
+    for sample in samples:
+        analysis = analyze_tokenization(sample, candidate)
+        total_tokens += analysis['total_tokens']
+    results[candidate] = total_tokens
+
+# 4. Select best
+best_tokenizer = min(results, key=results.get)
+print(f"Selected: {best_tokenizer}")
+
+# 5. Consider training custom SuperBPE if needed
+# See 'superbpe' skill for training
 ```
 
-### Pattern 2: Production Deployment
+### Pattern 2: Cost Estimation Before Deployment
 
 ```python
-# 1. Collect representative corpus
-# 2. Train with optimal settings
-tokenizer = train_superbpe(
-    corpus_path="production_corpus.txt",
-    output_path="./tokenizers/production_v1.json",
-    vocab_size=50000,
-    num_inherit_merges=40000
+def estimate_monthly_costs(
+    expected_prompts_per_month: int,
+    avg_prompt_length_chars: int,
+    tokenizer_name: str,
+    cost_per_million_tokens: float
+):
+    """
+    Estimate monthly API costs given tokenizer choice
+    """
+    # Estimate tokens per prompt
+    sample_text = "a" * avg_prompt_length_chars  # Dummy text
+    analysis = analyze_tokenization(sample_text, tokenizer_name)
+    tokens_per_prompt = analysis['total_tokens']
+
+    # Calculate costs
+    total_tokens = expected_prompts_per_month * tokens_per_prompt
+    monthly_cost = (total_tokens / 1_000_000) * cost_per_million_tokens
+
+    return {
+        'prompts_per_month': expected_prompts_per_month,
+        'tokens_per_prompt': tokens_per_prompt,
+        'total_monthly_tokens': total_tokens,
+        'monthly_cost': monthly_cost,
+        'yearly_cost': monthly_cost * 12
+    }
+
+# Example
+costs = estimate_monthly_costs(
+    expected_prompts_per_month=1_000_000,
+    avg_prompt_length_chars=500,
+    tokenizer_name="meta-llama/Llama-3.2-1B",
+    cost_per_million_tokens=20
 )
 
-# 3. Validate on test set
-# 4. A/B test in production
-# 5. Monitor metrics
+print(f"Monthly cost: ${costs['monthly_cost']:,.2f}")
+print(f"Yearly cost: ${costs['yearly_cost']:,.2f}")
 ```
 
-### Pattern 3: Multi-Domain
+### Pattern 3: Multi-Tokenizer Workflow
 
 ```python
-# Train separate tokenizers for different domains
-domains = ["medical", "legal", "technical"]
+# Route to different tokenizers based on content type
+def get_optimal_tokenizer(text: str) -> str:
+    """
+    Select best tokenizer based on text characteristics
+    """
+    # Check content type
+    if has_medical_terms(text):
+        return "./tokenizers/medical_superbpe.json"
+    elif has_code(text):
+        return "./tokenizers/code_superbpe.json"
+    elif is_multilingual(text):
+        return "meta-llama/Llama-3.2-3B"  # Better multilingual support
+    else:
+        return "meta-llama/Llama-3.2-1B"  # General purpose
 
-for domain in domains:
-    tokenizer = train_superbpe(
-        corpus_path=f"./corpus/{domain}_corpus.txt",
-        output_path=f"./tokenizers/{domain}_tokenizer.json",
-        vocab_size=32000
-    )
+# Use in production
+optimal_tokenizer = get_optimal_tokenizer(user_input)
+tokens = tokenize_with(user_input, optimal_tokenizer)
 ```
 
 ## Troubleshooting
 
-### Issue: Low Compression (<15%)
+### Issue: compare_tokenizers Returns Unexpected Results
 
 **Solution:**
 
-- Use more domain-specific corpus
-- Increase vocab_size
-- Check corpus quality
+```python
+# Ensure tokenizers are loaded correctly
+from transformers import AutoTokenizer
 
-### Issue: Poor Tokenization Quality
+# Test manually
+tok1 = AutoTokenizer.from_pretrained("tokenizer1")
+tok2 = AutoTokenizer.from_pretrained("tokenizer2")
+
+text = "test text"
+print(f"Tok1: {len(tok1.encode(text))} tokens")
+print(f"Tok2: {len(tok2.encode(text))} tokens")
+```
+
+### Issue: Custom Tokenizer Not Loading
 
 **Solution:**
 
-- Increase training corpus size
-- Adjust num_inherit_merges
-- Add domain-specific special tokens
+```python
+# Check file exists and format is correct
+import os
+from pathlib import Path
 
-### Issue: Long Training Time
+tokenizer_path = "./tokenizers/custom.json"
+if not Path(tokenizer_path).exists():
+    print(f"File not found: {tokenizer_path}")
+
+# Try loading directly
+try:
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    print(f"✓ Loaded successfully: {len(tokenizer)} tokens in vocab")
+except Exception as e:
+    print(f"✗ Error: {e}")
+```
+
+### Issue: Token Counts Don't Match API
 
 **Solution:**
 
-- Reduce corpus size
-- Use representative sample
-- Reduce vocab_size
+```python
+# Different APIs may use different tokenizers
+# Always use the correct tokenizer for your target API
+
+api_tokenizers = {
+    "openai_gpt4": "gpt2",  # Approximation
+    "anthropic_claude": "gpt2",  # Approximation
+    "llama3.2": "meta-llama/Llama-3.2-1B",
+    "mistral": "mistralai/Mistral-7B-v0.1"
+}
+
+# Use appropriate tokenizer for estimation
+```
 
 ## Best Practices
 
-1. **Start with evaluation** - Test potential before committing
-2. **Use representative data** - Train on data similar to production
-3. **Validate thoroughly** - Test on held-out data
-4. **Version your tokenizers** - Track which version is deployed
-5. **Monitor in production** - Track actual token reduction
-6. **Update periodically** - Retrain as your domain evolves
+### 1. Always Validate Before Production
 
-## Expected Results
+```python
+# Test on representative sample
+test_corpus = load_production_sample()
+validation = compare_on_corpus(
+    corpus=test_corpus,
+    tokenizer1="current",
+    tokenizer2="new_candidate"
+)
 
-| Domain         | Typical Reduction | Example            |
-| -------------- | ----------------- | ------------------ |
-| General text   | 20-25%            | News, blogs        |
-| Technical docs | 25-30%            | API docs, manuals  |
-| Medical        | 30-35%            | Clinical notes     |
-| Legal          | 25-30%            | Contracts, filings |
-| Code           | 25-33%            | Source code        |
+# Only proceed if better
+if validation['mean_reduction'] > 5:
+    print("✓ New tokenizer is better, proceed with integration")
+else:
+    print("✗ Marginal improvement, stick with current")
+```
+
+### 2. Consider Multiple Metrics
+
+Not just token count:
+
+- Token reduction percentage
+- Vocabulary coverage
+- Tokenization quality (important terms)
+- Integration complexity
+- Model compatibility
+
+### 3. Test with Actual Model
+
+```python
+# Token efficiency doesn't always mean better model performance
+# Always test end-to-end with your actual model
+```
+
+### 4. Version Control Tokenizers
+
+```
+./tokenizers/
+├── production.json -> llama3.2_v1.json
+├── llama3.2_v1.json
+├── custom_superbpe_v1.json
+├── custom_superbpe_v2.json
+└── README.md  # Document which tokenizer is used where
+```
+
+### 5. Monitor Token Usage in Production
+
+```python
+# Track actual token usage
+import logging
+
+def log_token_usage(prompt, tokenizer_name):
+    analysis = analyze_tokenization(prompt, tokenizer_name)
+    logging.info(f"Tokens: {analysis['total_tokens']}, Tokenizer: {tokenizer_name}")
+
+# Aggregate and analyze to find optimization opportunities
+```
 
 ## Additional Resources
 
-For more details, see:
+- **SuperBPE Training**: See the `superbpe` skill for comprehensive SuperBPE tokenizer training
+- **Unsloth Fine-tuning**: See the `unsloth-finetuning` skill for integration with model training
+- **MCP Server**: See the `unsloth-mcp-server` skill for codebase-specific guidance
 
-- [COMPARISON.md](COMPARISON.md) - Detailed comparison methodologies
-- [INTEGRATION.md](INTEGRATION.md) - Integration with models and APIs
-- [BENCHMARKS.md](BENCHMARKS.md) - Performance benchmarks
+## Summary
+
+Unsloth's tokenizer tools enable:
+
+- ✓ Quick comparison of tokenizers
+- ✓ Detailed tokenization analysis
+- ✓ Cost estimation and ROI calculation
+- ✓ Seamless integration with Unsloth models
+- ✓ Production validation and testing
+
+Use these tools to select, validate, and optimize tokenizers for your specific use case.
