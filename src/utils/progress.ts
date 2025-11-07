@@ -79,6 +79,8 @@ class ProgressTracker {
   }
 }
 
+// Export both the class and a singleton instance
+export { ProgressTracker };
 export const progressTracker = new ProgressTracker();
 
 // Helper to create progress-reporting Python scripts

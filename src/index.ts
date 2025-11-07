@@ -14,6 +14,9 @@ import logger from './utils/logger.js';
 import { validateToolInputs, ValidationError } from './utils/validation.js';
 import { safeExecute, SecurityError, TimeoutError } from './utils/security.js';
 import { metricsCollector } from './utils/metrics.js';
+import { config } from './utils/config.js';
+import { cache } from './utils/cache.js';
+import { progressTracker } from './utils/progress.js';
 
 const execPromise = promisify(exec);
 
@@ -27,7 +30,7 @@ class UnslothServer {
     this.server = new Server(
       {
         name: 'unsloth-server',
-        version: '2.0.0',
+        version: '2.1.0',
       },
       {
         capabilities: {
@@ -51,7 +54,13 @@ class UnslothServer {
       process.exit(0);
     });
 
-    logger.info('Unsloth MCP Server initialized', { version: '2.0.0' });
+    const serverConfig = config.get();
+    logger.info('Unsloth MCP Server initialized', {
+      version: '2.1.0',
+      environment: serverConfig.server.environment,
+      cacheEnabled: serverConfig.cache.enabled,
+      logLevel: serverConfig.logging.level
+    });
   }
 
   private async checkUnslothInstallation(): Promise<boolean> {
@@ -428,6 +437,13 @@ class UnslothServer {
           }
 
           case 'list_supported_models': {
+            // Check cache first
+            const cached = cache.get<string[]>('supported_models');
+            if (cached) {
+              logger.debug('Returning cached supported models');
+              return this.createSuccessResponse(name, startTime, JSON.stringify(cached, null, 2));
+            }
+
             const script = `
 import json
 try:
@@ -459,15 +475,12 @@ except Exception as e:
               if (models.error) {
                 throw new Error(models.error);
               }
-              
-              return {
-                content: [
-                  {
-                    type: 'text',
-                    text: JSON.stringify(models, null, 2),
-                  },
-                ],
-              };
+
+              // Cache the result for 1 hour
+              cache.set('supported_models', models, 3600);
+              logger.debug('Cached supported models list');
+
+              return this.createSuccessResponse(name, startTime, JSON.stringify(models, null, 2));
             } catch (error: any) {
               throw new Error(`Error parsing model list: ${error.message}`);
             }

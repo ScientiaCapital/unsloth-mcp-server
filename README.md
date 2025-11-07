@@ -1,4 +1,10 @@
-# Unsloth MCP Server v2.0
+# Unsloth MCP Server v2.1
+
+[![CI](https://github.com/ScientiaCapital/unsloth-mcp-server/workflows/CI/badge.svg)](https://github.com/ScientiaCapital/unsloth-mcp-server/actions)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a library that makes LLM fine-tuning 2x faster with 80% less memory.
 
@@ -538,3 +544,135 @@ For large models on limited hardware:
 ## License
 
 Apache-2.0
+
+## FAQ
+
+### General Questions
+
+**Q: What is MCP?**
+A: Model Context Protocol (MCP) is Anthropic's protocol that allows Claude to interact with external tools and services. This server implements MCP to give Claude access to Unsloth's fine-tuning capabilities.
+
+**Q: Do I need a GPU?**
+A: Yes, for fine-tuning you need an NVIDIA GPU with CUDA support. Minimum 8GB VRAM recommended. Some tools like `list_supported_models` and `check_installation` work without GPU.
+
+**Q: Which Python version is required?**
+A: Python 3.10, 3.11, or 3.12. Python 3.13 is not yet supported by Unsloth.
+
+**Q: Can I use this on CPU only?**
+A: Fine-tuning on CPU is extremely slow and not recommended. However, you can use the dataset preparation and tokenizer tools on CPU.
+
+### Installation Issues
+
+**Q: "Module 'unsloth' not found"**
+A: Install Unsloth: `pip install unsloth`
+
+**Q: "CUDA out of memory" errors**
+A: Reduce `batch_size` to 1, reduce `max_seq_length`, or use a smaller model (try Llama-1B instead of 7B).
+
+**Q: Build fails with TypeScript errors**
+A: Make sure you're using Node.js 18 or 20. Run `npm install` and `npm run build`.
+
+### Usage Questions
+
+**Q: How long does fine-tuning take?**
+A: Depends on hardware and settings:
+- RTX 3090: 10-30 minutes (100-500 steps)
+- RTX 4090: 5-15 minutes (100-500 steps)
+- A100: 3-10 minutes (100-500 steps)
+
+**Q: How much does it cost on cloud GPUs?**
+A: Approximately:
+- AWS g5.xlarge (A10G): ~$1.50/hour
+- Runpod RTX 4090: ~$1.50/hour
+- Lambda Labs A100: ~$1.10/hour
+
+Fine-tuning typically costs $0.50-$5 depending on model size and training time.
+
+**Q: Can I fine-tune multiple models simultaneously?**
+A: The server supports max 3 concurrent operations by default (configurable via `UNSLOTH_MAX_CONCURRENT_OPERATIONS`). Each operation requires significant GPU memory.
+
+**Q: Where are my models saved?**
+A: Models are saved to the `output_dir` you specify in the `finetune_model` call. By default, this is a local directory like `./my-finetuned-model/`.
+
+### Performance Questions
+
+**Q: Why is my training slower than expected?**
+A: Check:
+1. GPU is being used (`nvidia-smi`)
+2. Not using too large `max_seq_length`
+3. CUDA drivers are up to date
+4. No thermal throttling
+
+**Q: How can I improve model quality?**
+A: 
+1. Increase `max_steps` (try 500-1000)
+2. Use higher quality training data
+3. Experiment with `learning_rate` (1e-4 to 5e-4)
+4. Use a larger model if resources allow
+5. Train for multiple epochs
+
+**Q: How do I reduce token costs with SuperBPE?**
+A: Train a SuperBPE tokenizer on your domain-specific corpus. See `examples/02-superbpe-tokenizer.md` for a complete guide. You can typically achieve 20-33% token reduction.
+
+### Docker Questions
+
+**Q: How do I use the Docker version?**
+A:
+```bash
+# Build the image
+docker-compose build
+
+# Run the server
+docker-compose up unsloth-mcp
+
+# For development with hot reload
+docker-compose --profile dev up unsloth-mcp-dev
+```
+
+**Q: Do I need NVIDIA Container Toolkit?**
+A: Yes, for GPU access in Docker. Install from: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+### Troubleshooting
+
+**Q: Tests are failing**
+A: Run `npm install` again, then `npm test`. If specific tests fail, check the error messages and ensure all dependencies are installed.
+
+**Q: "Permission denied" errors**
+A: The server has security restrictions on file paths. Check `UNSLOTH_ALLOWED_PATHS` and `UNSLOTH_BLOCKED_PATHS` in your configuration.
+
+**Q: Logs show "Script execution timed out"**
+A: Increase `UNSLOTH_MAX_EXECUTION_TIME` (default 10 minutes) or reduce the workload size.
+
+**Q: Cache not working**
+A: Check `UNSLOTH_CACHE_ENABLED=true` and ensure the `.cache` directory is writable.
+
+### Contributing
+
+**Q: How can I contribute?**
+A: See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. We welcome:
+- Bug reports and fixes
+- New features
+- Documentation improvements
+- Example scripts
+- Performance optimizations
+
+**Q: How do I report a bug?**
+A: Open an issue on GitHub with:
+1. Clear description of the problem
+2. Steps to reproduce
+3. Expected vs actual behavior
+4. Environment details (OS, Node version, GPU, etc.)
+5. Error logs
+
+## Support
+
+- **Documentation**: See [examples/](examples/) for detailed guides
+- **Issues**: [GitHub Issues](https://github.com/ScientiaCapital/unsloth-mcp-server/issues)
+- **Unsloth**: [Unsloth GitHub](https://github.com/unslothai/unsloth)
+
+## Related Projects
+
+- [Unsloth](https://github.com/unslothai/unsloth) - Fast LLM fine-tuning library
+- [Model Context Protocol](https://modelcontextprotocol.io/) - MCP specification
+- [Claude Desktop](https://claude.ai/) - Claude AI assistant
+

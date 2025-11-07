@@ -208,5 +208,7 @@ class ConfigManager {
   }
 }
 
+// Export both the class and a singleton instance
+export { ConfigManager, DEFAULT_CONFIG };
 export const config = new ConfigManager();
 export default config;
