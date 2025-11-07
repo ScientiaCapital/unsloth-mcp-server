@@ -4,12 +4,24 @@ An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a l
 
 ## What's New in v2.0
 
+### New Features
 - **SuperBPE Tokenizer Training**: Train state-of-the-art SuperBPE tokenizers for up to 33% token reduction
 - **Model Information Tool**: Get detailed architecture and parameter information
 - **Tokenizer Comparison**: Compare tokenization efficiency between different tokenizers
 - **Performance Benchmarking**: Benchmark model inference speed and memory usage
 - **Dataset Discovery**: Search and list Hugging Face datasets
 - **Dataset Preparation**: Prepare and format datasets for fine-tuning
+
+### Production-Ready Infrastructure
+- **Comprehensive Logging**: Winston-based structured logging with multiple transports
+- **Input Validation**: Full validation for all tool inputs with helpful error messages
+- **Security**: Input sanitization, path validation, resource limits, rate limiting
+- **Error Handling**: Smart error detection with contextual suggestions
+- **Performance Metrics**: Track tool usage, success rates, and execution times
+- **Testing**: 43 comprehensive tests with high coverage
+- **Type Safety**: Full TypeScript with strict mode enabled
+
+[See PRODUCTION_GUIDE.md](PRODUCTION_GUIDE.md) for deployment and monitoring details.
 
 ## What is Unsloth?
 
