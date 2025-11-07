@@ -1,16 +1,12 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import logger from './logger.js';
+import config from './config.js';
 
 const execPromise = promisify(exec);
 
-// Resource limits configuration
-export const RESOURCE_LIMITS = {
-  MAX_EXECUTION_TIME: 600000, // 10 minutes
-  MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB
-  MAX_SCRIPT_LENGTH: 50000, // Max Python script length
-  MAX_CONCURRENT_OPERATIONS: 3, // Max concurrent tool executions
-};
+// Resource limits configuration (loaded from config)
+export const RESOURCE_LIMITS = config.getLimits();
 
 // Track concurrent operations for rate limiting
 let currentOperations = 0;
@@ -32,7 +28,7 @@ export class TimeoutError extends Error {
 
 // Rate limiter for tool executions
 export async function acquireExecutionSlot(): Promise<() => void> {
-  if (currentOperations >= RESOURCE_LIMITS.MAX_CONCURRENT_OPERATIONS) {
+  if (currentOperations >= RESOURCE_LIMITS.maxConcurrentOperations) {
     logger.info('Rate limit reached, queuing operation');
 
     await new Promise<void>((resolve) => {
@@ -57,9 +53,9 @@ export async function acquireExecutionSlot(): Promise<() => void> {
 
 // Sanitize Python script to prevent code injection
 export function sanitizePythonScript(script: string): string {
-  if (script.length > RESOURCE_LIMITS.MAX_SCRIPT_LENGTH) {
+  if (script.length > RESOURCE_LIMITS.maxScriptLength) {
     throw new SecurityError(
-      `Python script exceeds maximum length of ${RESOURCE_LIMITS.MAX_SCRIPT_LENGTH} characters`
+      `Python script exceeds maximum length of ${RESOURCE_LIMITS.maxScriptLength} characters`
     );
   }
 
@@ -88,7 +84,7 @@ export function sanitizePythonScript(script: string): string {
 // Execute Python with timeout
 export async function executePythonWithTimeout(
   script: string,
-  timeout: number = RESOURCE_LIMITS.MAX_EXECUTION_TIME
+  timeout: number = RESOURCE_LIMITS.maxExecutionTime
 ): Promise<{ stdout: string; stderr: string }> {
   const sanitizedScript = sanitizePythonScript(script);
 
@@ -123,9 +119,9 @@ export async function validateFileSize(filePath: string): Promise<void> {
     const { stdout } = await execPromise(`stat -c%s "${filePath}" 2>/dev/null || wc -c < "${filePath}"`);
     const fileSize = parseInt(stdout.trim(), 10);
 
-    if (fileSize > RESOURCE_LIMITS.MAX_FILE_SIZE) {
+    if (fileSize > RESOURCE_LIMITS.maxFileSize) {
       throw new SecurityError(
-        `File size ${fileSize} bytes exceeds maximum allowed size of ${RESOURCE_LIMITS.MAX_FILE_SIZE} bytes`
+        `File size ${fileSize} bytes exceeds maximum allowed size of ${RESOURCE_LIMITS.maxFileSize} bytes`
       );
     }
 
@@ -173,7 +169,7 @@ export interface SafeExecutionContext {
 }
 
 export const DEFAULT_EXECUTION_CONTEXT: SafeExecutionContext = {
-  timeout: RESOURCE_LIMITS.MAX_EXECUTION_TIME,
+  timeout: RESOURCE_LIMITS.maxExecutionTime,
   maxRetries: 2,
   validateInput: true,
   sanitizeScript: true,

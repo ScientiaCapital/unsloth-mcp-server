@@ -12,7 +12,7 @@ print(json.dumps({"hello": "world"}))
     });
 
     test('should reject scripts that are too long', () => {
-      const longScript = 'a'.repeat(RESOURCE_LIMITS.MAX_SCRIPT_LENGTH + 1);
+      const longScript = 'a'.repeat(RESOURCE_LIMITS.maxScriptLength + 1);
       expect(() => sanitizePythonScript(longScript)).toThrow(SecurityError);
     });
 
@@ -47,18 +47,18 @@ print("safe")
 
   describe('RESOURCE_LIMITS', () => {
     test('should have reasonable defaults', () => {
-      expect(RESOURCE_LIMITS.MAX_EXECUTION_TIME).toBeGreaterThan(0);
-      expect(RESOURCE_LIMITS.MAX_FILE_SIZE).toBeGreaterThan(0);
-      expect(RESOURCE_LIMITS.MAX_SCRIPT_LENGTH).toBeGreaterThan(0);
-      expect(RESOURCE_LIMITS.MAX_CONCURRENT_OPERATIONS).toBeGreaterThan(0);
+      expect(RESOURCE_LIMITS.maxExecutionTime).toBeGreaterThan(0);
+      expect(RESOURCE_LIMITS.maxFileSize).toBeGreaterThan(0);
+      expect(RESOURCE_LIMITS.maxScriptLength).toBeGreaterThan(0);
+      expect(RESOURCE_LIMITS.maxConcurrentOperations).toBeGreaterThan(0);
     });
 
     test('should have execution time of 10 minutes', () => {
-      expect(RESOURCE_LIMITS.MAX_EXECUTION_TIME).toBe(600000);
+      expect(RESOURCE_LIMITS.maxExecutionTime).toBe(600000);
     });
 
     test('should have file size limit of 100MB', () => {
-      expect(RESOURCE_LIMITS.MAX_FILE_SIZE).toBe(100 * 1024 * 1024);
+      expect(RESOURCE_LIMITS.maxFileSize).toBe(100 * 1024 * 1024);
     });
   });
 });
