@@ -222,5 +222,7 @@ class Cache {
   }
 }
 
+// Export both the class and a singleton instance
+export { Cache };
 export const cache = new Cache();
 export default cache;
