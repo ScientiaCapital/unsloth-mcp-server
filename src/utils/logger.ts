@@ -29,18 +29,19 @@ export const logger = winston.createLogger({
 
 // If not in production, also log to console with colorized output
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    ),
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+    })
+  );
 } else {
   // In production, log to stderr for MCP protocol compatibility
-  logger.add(new winston.transports.Console({
-    stderrLevels: ['error', 'warn', 'info', 'debug'],
-    format: winston.format.simple(),
-  }));
+  logger.add(
+    new winston.transports.Console({
+      stderrLevels: ['error', 'warn', 'info', 'debug'],
+      format: winston.format.simple(),
+    })
+  );
 }
 
 export default logger;

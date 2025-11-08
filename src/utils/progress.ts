@@ -41,7 +41,7 @@ class ProgressTracker {
   report(operationId: string, update: ProgressUpdate): void {
     const cbs = this.callbacks.get(operationId);
     if (cbs) {
-      cbs.forEach(cb => {
+      cbs.forEach((cb) => {
         try {
           cb(update);
         } catch (error: any) {

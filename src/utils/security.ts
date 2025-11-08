@@ -116,7 +116,9 @@ export async function executePythonWithTimeout(
 // Validate file size before processing
 export async function validateFileSize(filePath: string): Promise<void> {
   try {
-    const { stdout } = await execPromise(`stat -c%s "${filePath}" 2>/dev/null || wc -c < "${filePath}"`);
+    const { stdout } = await execPromise(
+      `stat -c%s "${filePath}" 2>/dev/null || wc -c < "${filePath}"`
+    );
     const fileSize = parseInt(stdout.trim(), 10);
 
     if (fileSize > RESOURCE_LIMITS.maxFileSize) {
@@ -190,7 +192,7 @@ export async function safeExecute(
         if (attempt > 0) {
           logger.info(`Retry attempt ${attempt} of ${context.maxRetries}`);
           // Exponential backoff: 1s, 2s, 4s
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
         }
 
         const { stdout, stderr } = await executePythonWithTimeout(script, context.timeout);

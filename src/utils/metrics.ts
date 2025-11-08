@@ -48,7 +48,7 @@ class MetricsCollector {
 
   getMetrics(toolName?: string): ToolMetrics[] {
     if (toolName) {
-      return this.metrics.filter(m => m.toolName === toolName);
+      return this.metrics.filter((m) => m.toolName === toolName);
     }
     return [...this.metrics];
   }
@@ -61,9 +61,7 @@ class MetricsCollector {
     minDuration: number;
     maxDuration: number;
   } {
-    const metrics = toolName
-      ? this.metrics.filter(m => m.toolName === toolName)
-      : this.metrics;
+    const metrics = toolName ? this.metrics.filter((m) => m.toolName === toolName) : this.metrics;
 
     if (metrics.length === 0) {
       return {
@@ -76,8 +74,8 @@ class MetricsCollector {
       };
     }
 
-    const durations = metrics.map(m => m.duration || 0).filter(d => d > 0);
-    const successful = metrics.filter(m => m.success).length;
+    const durations = metrics.map((m) => m.duration || 0).filter((d) => d > 0);
+    const successful = metrics.filter((m) => m.success).length;
 
     return {
       totalCalls: metrics.length,
