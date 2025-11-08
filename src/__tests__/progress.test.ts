@@ -10,7 +10,7 @@ describe('ProgressTracker', () => {
       const update: ProgressUpdate = {
         stage: 'test',
         progress: 0.5,
-        message: 'Test progress'
+        message: 'Test progress',
       };
 
       progressTracker.report('test-op-1', update);
@@ -29,7 +29,7 @@ describe('ProgressTracker', () => {
       const update: ProgressUpdate = {
         stage: 'test',
         progress: 0.5,
-        message: 'Test'
+        message: 'Test',
       };
 
       progressTracker.report('test-op-2', update);
@@ -50,7 +50,7 @@ describe('ProgressTracker', () => {
         progress: 0.5,
         message: 'Halfway',
         eta: 120,
-        details: { itemsProcessed: 50 }
+        details: { itemsProcessed: 50 },
       });
 
       const call = callback.mock.calls[0][0] as ProgressUpdate;

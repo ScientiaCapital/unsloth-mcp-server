@@ -37,7 +37,7 @@ describe('metricsCollector', () => {
     for (let i = 0; i < tools.length; i++) {
       const start = Date.now();
       // Add small delay to ensure duration > 0
-      await new Promise(resolve => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 1));
       metricsCollector.endTool(tools[i], start, successes[i]);
     }
 
@@ -64,7 +64,7 @@ describe('metricsCollector', () => {
 
     const tool1Metrics = metricsCollector.getMetrics('tool1');
     expect(tool1Metrics).toHaveLength(2);
-    expect(tool1Metrics.every(m => m.toolName === 'tool1')).toBe(true);
+    expect(tool1Metrics.every((m) => m.toolName === 'tool1')).toBe(true);
   });
 
   test('should handle empty metrics gracefully', () => {

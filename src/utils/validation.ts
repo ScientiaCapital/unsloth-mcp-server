@@ -1,7 +1,10 @@
 import logger from './logger.js';
 
 export class ValidationError extends Error {
-  constructor(message: string, public suggestions?: string[]) {
+  constructor(
+    message: string,
+    public suggestions?: string[]
+  ) {
     super(message);
     this.name = 'ValidationError';
   }
@@ -29,19 +32,17 @@ export const validators = {
 
     // Prevent directory traversal
     if (path.includes('..')) {
-      throw new ValidationError(
-        `${fieldName} contains invalid characters (..)`,
-        ['Use absolute paths or paths without .. components']
-      );
+      throw new ValidationError(`${fieldName} contains invalid characters (..)`, [
+        'Use absolute paths or paths without .. components',
+      ]);
     }
 
     // Prevent absolute paths outside safe directories (optional, can be configured)
     const dangerousPaths = ['/etc', '/sys', '/proc', '/root'];
-    if (dangerousPaths.some(dp => path.startsWith(dp))) {
-      throw new ValidationError(
-        `${fieldName} points to a restricted directory`,
-        ['Use paths in your home directory or project directory']
-      );
+    if (dangerousPaths.some((dp) => path.startsWith(dp))) {
+      throw new ValidationError(`${fieldName} points to a restricted directory`, [
+        'Use paths in your home directory or project directory',
+      ]);
     }
   },
 
@@ -64,10 +65,10 @@ export const validators = {
       throw new ValidationError(`${fieldName} must be a string`);
     }
     if (text.length > maxLength) {
-      throw new ValidationError(
-        `${fieldName} is too long (max ${maxLength} characters)`,
-        [`Current length: ${text.length}`, 'Consider splitting into smaller chunks']
-      );
+      throw new ValidationError(`${fieldName} is too long (max ${maxLength} characters)`, [
+        `Current length: ${text.length}`,
+        'Consider splitting into smaller chunks',
+      ]);
     }
   },
 
@@ -91,10 +92,9 @@ export const validators = {
     }
 
     if (value < min || value > max) {
-      throw new ValidationError(
-        `${fieldName} must be between ${min} and ${max}`,
-        [`Current value: ${value}`]
-      );
+      throw new ValidationError(`${fieldName} must be between ${min} and ${max}`, [
+        `Current value: ${value}`,
+      ]);
     }
 
     return value;
@@ -115,10 +115,9 @@ export const validators = {
     }
 
     if (!allowedValues.includes(value)) {
-      throw new ValidationError(
-        `${fieldName} must be one of: ${allowedValues.join(', ')}`,
-        [`Current value: ${value}`]
-      );
+      throw new ValidationError(`${fieldName} must be one of: ${allowedValues.join(', ')}`, [
+        `Current value: ${value}`,
+      ]);
     }
 
     return value;
@@ -146,10 +145,9 @@ export const validators = {
     }
 
     if (query.length > maxLength) {
-      throw new ValidationError(
-        `Search query is too long (max ${maxLength} characters)`,
-        [`Current length: ${query.length}`]
-      );
+      throw new ValidationError(`Search query is too long (max ${maxLength} characters)`, [
+        `Current length: ${query.length}`,
+      ]);
     }
 
     return query;
@@ -205,7 +203,12 @@ export function validateToolInputs(toolName: string, args: any): void {
       case 'export_model':
         validators.filePath(args.model_path, 'model_path');
         validators.filePath(args.output_path, 'output_path');
-        validators.enumValue(args.export_format, 'export_format', ['gguf', 'ollama', 'vllm', 'huggingface']);
+        validators.enumValue(args.export_format, 'export_format', [
+          'gguf',
+          'ollama',
+          'vllm',
+          'huggingface',
+        ]);
         if (args.quantization_bits !== undefined) {
           validators.numericRange(args.quantization_bits, 'quantization_bits', 2, 16);
         }
