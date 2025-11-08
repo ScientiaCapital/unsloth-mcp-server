@@ -3,3 +3,16 @@ build/
 .DS_Store
 *.log
 .env
+logs/
+coverage/
+.cache/
+*.tmp
+*.temp
+.vscode/
+.idea/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npmrc
