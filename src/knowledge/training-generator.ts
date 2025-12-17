@@ -1,0 +1,556 @@
+/**
+ * Training Data Generator
+ *
+ * Transforms knowledge entries into instruction-tuning training pairs
+ * Supports multiple generation strategies for diverse training data
+ */
+
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import {
+  KnowledgeEntry,
+  TrainingPair,
+  Category,
+  CATEGORY_DEFINITIONS,
+  AlpacaFormat,
+} from './schema.js';
+import { KnowledgeDatabase } from './database.js';
+import logger from '../utils/logger.js';
+
+const execPromise = promisify(exec);
+
+// ============================================================================
+// System Prompts for Different Personas
+// ============================================================================
+
+export const SYSTEM_PROMPTS = {
+  trading_expert: `You are an expert trading educator with decades of experience in technical analysis, chart patterns, and market psychology. You explain concepts clearly with practical examples.`,
+
+  risk_manager: `You are a professional risk manager specializing in position sizing, stop-loss strategies, and capital preservation. You prioritize protecting capital above all else.`,
+
+  chart_analyst: `You are a technical chart analyst who specializes in reading candlestick patterns and price action. You can identify patterns and explain their significance.`,
+
+  options_specialist: `You are an options trading specialist who understands Greeks, volatility, and complex options strategies. You explain options concepts in practical terms.`,
+
+  trading_coach: `You are a trading coach who helps traders develop discipline, manage emotions, and build consistent trading habits. You focus on psychology and process.`,
+};
+
+// ============================================================================
+// Question Templates by Category
+// ============================================================================
+
+const QUESTION_TEMPLATES: Record<Category, string[]> = {
+  candlestick_patterns: [
+    'What is a {topic} candlestick pattern and how do I identify it?',
+    'How should I trade when I see a {topic} pattern?',
+    'What does a {topic} pattern tell us about market sentiment?',
+    'Can you explain the psychology behind the {topic} pattern?',
+    'What confirmation signals should I look for with a {topic} pattern?',
+    'What is the success rate of the {topic} pattern?',
+    'How does volume affect the reliability of a {topic} pattern?',
+  ],
+  chart_patterns: [
+    'How do I identify a {topic} chart pattern?',
+    'What is the typical price target for a {topic} pattern?',
+    'How should I set my stop loss when trading a {topic}?',
+    'What timeframes work best for trading {topic} patterns?',
+    'What are the key characteristics of a valid {topic} pattern?',
+    'How do I distinguish a true {topic} from a false one?',
+  ],
+  technical_indicators: [
+    'How do I use {topic} in my trading?',
+    'What settings should I use for {topic}?',
+    'How do I interpret {topic} signals?',
+    'What are the limitations of {topic}?',
+    'How does {topic} compare to other indicators?',
+    'Can you explain {topic} divergence?',
+  ],
+  risk_management: [
+    'How should I calculate my position size?',
+    'What is a good risk-reward ratio to aim for?',
+    'How do I set an effective stop loss?',
+    'What percentage of my capital should I risk per trade?',
+    'How do I manage drawdowns effectively?',
+    'When should I scale into or out of a position?',
+  ],
+  trading_psychology: [
+    'How do I deal with {topic} in trading?',
+    'What causes traders to make emotional decisions?',
+    'How can I develop more trading discipline?',
+    'What should I do after a losing streak?',
+    'How do I avoid revenge trading?',
+    'What mindset habits lead to consistent trading?',
+  ],
+  market_structure: [
+    'How do I identify {topic} in the market?',
+    'What defines a valid {topic} level?',
+    'How do I know when a {topic} will hold?',
+    'What causes {topic} to form?',
+    'How should I trade around {topic}?',
+  ],
+  options_strategies: [
+    'How do I set up a {topic} options trade?',
+    'What are the risks of a {topic} strategy?',
+    'When should I use a {topic} strategy?',
+    'How does implied volatility affect {topic}?',
+    'What is the max profit and loss for a {topic}?',
+  ],
+  fundamental_analysis: [
+    'What metrics should I look at for {topic}?',
+    'How do I evaluate a company using {topic}?',
+    'What does {topic} tell us about a stock?',
+    'How do I combine {topic} with technical analysis?',
+  ],
+  order_flow: [
+    'How do I read {topic}?',
+    'What does {topic} tell us about institutional activity?',
+    'How can I use {topic} to improve my entries?',
+    'What tools do I need for {topic} analysis?',
+  ],
+  volume_analysis: [
+    'How do I interpret {topic}?',
+    'What does high {topic} indicate?',
+    'How do I use {topic} to confirm trades?',
+    'What is the relationship between {topic} and price?',
+  ],
+  general: [
+    'Can you explain this trading concept?',
+    'What should I know about this topic?',
+    'How does this apply to real trading?',
+  ],
+};
+
+// ============================================================================
+// Training Pair Generation
+// ============================================================================
+
+export interface GeneratorOptions {
+  min_quality_score?: number;
+  pairs_per_entry?: number;
+  include_system_prompt?: boolean;
+  system_prompt_type?: keyof typeof SYSTEM_PROMPTS;
+  generate_qa?: boolean;
+  generate_instruction?: boolean;
+  generate_conversation?: boolean;
+}
+
+/**
+ * Generate training pairs from a knowledge entry
+ */
+export function generateTrainingPairs(
+  entry: KnowledgeEntry,
+  options: GeneratorOptions = {}
+): TrainingPair[] {
+  const pairs: TrainingPair[] = [];
+  const {
+    pairs_per_entry = 3,
+    include_system_prompt = true,
+    system_prompt_type = 'trading_expert',
+    generate_qa = true,
+    generate_instruction = true,
+    generate_conversation = true,
+  } = options;
+
+  const systemPrompt = include_system_prompt ? SYSTEM_PROMPTS[system_prompt_type] : undefined;
+  const content = entry.cleaned_text;
+  const category = entry.category;
+  const topics = entry.topics;
+
+  // Generate Q&A pairs
+  if (generate_qa && topics.length > 0) {
+    const templates = QUESTION_TEMPLATES[category] || QUESTION_TEMPLATES.general;
+
+    for (let i = 0; i < Math.min(pairs_per_entry, templates.length); i++) {
+      const topic = topics[i % topics.length];
+      const question = templates[i].replace('{topic}', topic);
+
+      pairs.push({
+        id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        type: 'qa',
+        instruction: question,
+        input: '',
+        output: generateAnswer(content, question, topic),
+        system_prompt: systemPrompt,
+        quality_score: calculateQualityScore(content, question),
+      });
+    }
+  }
+
+  // Generate instruction-following pairs
+  if (generate_instruction) {
+    // Summarization task
+    pairs.push({
+      id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      type: 'instruction',
+      instruction: 'Summarize the key trading concepts from the following text.',
+      input: content,
+      output: generateSummary(content),
+      system_prompt: systemPrompt,
+      quality_score: calculateQualityScore(content, 'summarize'),
+    });
+
+    // Key points extraction
+    if (content.length > 200) {
+      pairs.push({
+        id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        type: 'instruction',
+        instruction: 'Extract the main actionable trading insights from this content.',
+        input: content,
+        output: extractKeyPoints(content),
+        system_prompt: systemPrompt,
+        quality_score: calculateQualityScore(content, 'extract'),
+      });
+    }
+  }
+
+  // Generate conversation-style pairs
+  if (generate_conversation && topics.length > 0) {
+    const topic = topics[0];
+    const categoryDef = CATEGORY_DEFINITIONS[category];
+
+    pairs.push({
+      id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      type: 'conversation',
+      instruction: `I'm trying to understand ${topic}. Can you explain it?`,
+      input: '',
+      output: generateExplanation(content, topic, categoryDef.description),
+      system_prompt: systemPrompt,
+      quality_score: calculateQualityScore(content, topic),
+    });
+  }
+
+  return pairs;
+}
+
+/**
+ * Generate an answer from content based on question
+ */
+function generateAnswer(content: string, question: string, topic: string): string {
+  // Extract relevant sentences containing the topic
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 20);
+  const relevantSentences = sentences.filter((s) => s.toLowerCase().includes(topic.toLowerCase()));
+
+  if (relevantSentences.length > 0) {
+    // Construct answer from relevant content
+    const answer = relevantSentences.slice(0, 3).join('. ').trim();
+    return answer.endsWith('.') ? answer : answer + '.';
+  }
+
+  // Fallback: use first few sentences
+  return sentences.slice(0, 3).join('. ').trim() + '.';
+}
+
+/**
+ * Generate a summary of content
+ */
+function generateSummary(content: string): string {
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 20);
+
+  if (sentences.length <= 3) {
+    return content.trim();
+  }
+
+  // Take first, middle, and last meaningful sentences
+  const summary = [
+    sentences[0],
+    sentences[Math.floor(sentences.length / 2)],
+    sentences[sentences.length - 1],
+  ]
+    .join('. ')
+    .trim();
+
+  return summary.endsWith('.') ? summary : summary + '.';
+}
+
+/**
+ * Extract key points from content
+ */
+function extractKeyPoints(content: string): string {
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 20);
+
+  // Look for sentences with key indicators
+  const keyIndicators = [
+    'important',
+    'key',
+    'remember',
+    'always',
+    'never',
+    'must',
+    'should',
+    'critical',
+    'essential',
+    'rule',
+    'tip',
+    'strategy',
+    'pattern',
+    'signal',
+    'confirm',
+  ];
+
+  const keyPoints: string[] = [];
+
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+    if (keyIndicators.some((indicator) => lower.includes(indicator))) {
+      keyPoints.push(`- ${sentence.trim()}`);
+    }
+  }
+
+  if (keyPoints.length === 0) {
+    // Fallback: take first few sentences as bullet points
+    return sentences
+      .slice(0, 4)
+      .map((s) => `- ${s.trim()}`)
+      .join('\n');
+  }
+
+  return keyPoints.slice(0, 5).join('\n');
+}
+
+/**
+ * Generate an explanation for a topic
+ */
+function generateExplanation(content: string, topic: string, categoryDescription: string): string {
+  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 20);
+  const relevantSentences = sentences.filter((s) => s.toLowerCase().includes(topic.toLowerCase()));
+
+  let explanation = '';
+
+  if (relevantSentences.length > 0) {
+    explanation = relevantSentences.slice(0, 4).join('. ').trim();
+  } else {
+    explanation = sentences.slice(0, 4).join('. ').trim();
+  }
+
+  // Add context about the category
+  const prefix = `${topic} is a concept in ${categoryDescription.toLowerCase()}. `;
+
+  return prefix + explanation + (explanation.endsWith('.') ? '' : '.');
+}
+
+/**
+ * Calculate quality score for a training pair
+ */
+function calculateQualityScore(content: string, query: string): number {
+  let score = 50; // Base score
+
+  // Length checks
+  if (content.length > 100) score += 10;
+  if (content.length > 300) score += 10;
+  if (content.length > 500) score += 5;
+
+  // Content quality indicators
+  const qualityIndicators = [
+    'example',
+    'for instance',
+    'such as',
+    'specifically',
+    'in practice',
+    'step',
+    'first',
+    'then',
+    'finally',
+    'important',
+  ];
+
+  for (const indicator of qualityIndicators) {
+    if (content.toLowerCase().includes(indicator)) {
+      score += 3;
+    }
+  }
+
+  // Cap at 95
+  return Math.min(95, score);
+}
+
+// ============================================================================
+// Batch Processing
+// ============================================================================
+
+/**
+ * Generate training data from all knowledge entries in the database
+ */
+export async function generateFromDatabase(
+  db: KnowledgeDatabase,
+  options: GeneratorOptions = {}
+): Promise<{
+  total_entries_processed: number;
+  total_pairs_generated: number;
+  pairs_by_type: Record<string, number>;
+}> {
+  const stats = await db.getStats();
+  let totalPairs = 0;
+  const pairsByType: Record<string, number> = {
+    qa: 0,
+    instruction: 0,
+    conversation: 0,
+  };
+
+  // Process each category
+  for (const category of Object.keys(CATEGORY_DEFINITIONS) as Category[]) {
+    const entries = await db.listByCategory(category);
+
+    for (const entry of entries) {
+      // Skip low quality entries
+      if (entry.quality_score < (options.min_quality_score || 30)) {
+        continue;
+      }
+
+      // Get full entry
+      const fullEntry = await db.getEntry(entry.id);
+      if (!fullEntry) continue;
+
+      // Generate pairs
+      const pairs = generateTrainingPairs(fullEntry, options);
+
+      // Store pairs in database
+      for (const pair of pairs) {
+        await db.addTrainingPair(entry.id, pair);
+        totalPairs++;
+        pairsByType[pair.type]++;
+      }
+    }
+  }
+
+  logger.info('Training data generation complete', {
+    entries: stats.total_entries,
+    pairs: totalPairs,
+    byType: pairsByType,
+  });
+
+  return {
+    total_entries_processed: stats.total_entries,
+    total_pairs_generated: totalPairs,
+    pairs_by_type: pairsByType,
+  };
+}
+
+/**
+ * Generate synthetic Q&A pairs using an LLM
+ */
+export async function generateSyntheticPairs(
+  content: string,
+  category: Category,
+  numPairs: number = 5
+): Promise<TrainingPair[]> {
+  // Check if we have an API key for generation
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    logger.warn('No ANTHROPIC_API_KEY found, using template-based generation');
+    // Fallback to template-based generation
+    return generateTemplatePairs(content, category, numPairs);
+  }
+
+  const script = `
+import anthropic
+import json
+
+try:
+    client = anthropic.Anthropic(api_key="${apiKey}")
+
+    prompt = """Based on this trading/finance content, generate ${numPairs} high-quality Q&A pairs for training an AI assistant.
+
+Content:
+${content.replace(/"/g, '\\"').replace(/\n/g, '\\n')}
+
+Category: ${category}
+
+Generate diverse questions that cover:
+1. Factual understanding
+2. Practical application
+3. Pattern recognition
+4. Risk considerations
+5. Real-world scenarios
+
+Return as JSON array with format:
+[
+  {
+    "instruction": "question here",
+    "input": "",
+    "output": "detailed answer here"
+  }
+]
+
+Make answers comprehensive (2-4 sentences) and actionable."""
+
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=2048,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    response_text = message.content[0].text
+
+    # Extract JSON from response
+    import re
+    json_match = re.search(r'\\[.*\\]', response_text, re.DOTALL)
+    if json_match:
+        pairs = json.loads(json_match.group())
+        print(json.dumps({"success": True, "pairs": pairs}))
+    else:
+        print(json.dumps({"success": False, "error": "No JSON found in response"}))
+
+except Exception as e:
+    print(json.dumps({"success": False, "error": str(e)}))
+`;
+
+  try {
+    const { stdout } = await execPromise(`python3 -c '${script}'`, { timeout: 60000 });
+    const result = JSON.parse(stdout.trim());
+
+    if (!result.success) {
+      logger.warn('Synthetic generation failed, using templates', { error: result.error });
+      return generateTemplatePairs(content, category, numPairs);
+    }
+
+    return result.pairs.map((pair: AlpacaFormat, idx: number) => ({
+      id: `syn_${Date.now()}_${idx}`,
+      type: 'qa' as const,
+      instruction: pair.instruction,
+      input: pair.input,
+      output: pair.output,
+      system_prompt: SYSTEM_PROMPTS.trading_expert,
+      quality_score: 80, // Synthetic pairs get high base score
+    }));
+  } catch (error: any) {
+    logger.warn('Synthetic generation error, using templates', { error: error.message });
+    return generateTemplatePairs(content, category, numPairs);
+  }
+}
+
+/**
+ * Fallback template-based pair generation
+ */
+function generateTemplatePairs(
+  content: string,
+  category: Category,
+  numPairs: number
+): TrainingPair[] {
+  const templates = QUESTION_TEMPLATES[category] || QUESTION_TEMPLATES.general;
+  const pairs: TrainingPair[] = [];
+
+  // Extract potential topics from content
+  const categoryDef = CATEGORY_DEFINITIONS[category];
+  const detectedTopics = categoryDef.keywords.filter((keyword) =>
+    content.toLowerCase().includes(keyword.toLowerCase())
+  );
+
+  const topics = detectedTopics.length > 0 ? detectedTopics : ['this concept'];
+
+  for (let i = 0; i < Math.min(numPairs, templates.length); i++) {
+    const topic = topics[i % topics.length];
+    const question = templates[i].replace('{topic}', topic);
+
+    pairs.push({
+      id: `tpl_${Date.now()}_${i}`,
+      type: 'qa',
+      instruction: question,
+      input: '',
+      output: generateAnswer(content, question, topic),
+      system_prompt: SYSTEM_PROMPTS.trading_expert,
+      quality_score: 60,
+    });
+  }
+
+  return pairs;
+}

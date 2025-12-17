@@ -17,6 +17,20 @@ import { metricsCollector } from './utils/metrics.js';
 import { config } from './utils/config.js';
 import { cache } from './utils/cache.js';
 import { progressTracker } from './utils/progress.js';
+import {
+  KnowledgeDatabase,
+  knowledgeDb,
+  processImage,
+  processImageBatch,
+  checkOCRBackends,
+  classifyContent,
+  cleanText,
+  generateTrainingPairs,
+  generateFromDatabase,
+  generateSyntheticPairs,
+  Category,
+  CATEGORY_DEFINITIONS,
+} from './knowledge/index.js';
 
 const execPromise = promisify(exec);
 
@@ -30,7 +44,7 @@ class UnslothServer {
     this.server = new Server(
       {
         name: 'unsloth-server',
-        version: '2.1.0',
+        version: '2.2.0',
       },
       {
         capabilities: {
@@ -56,10 +70,10 @@ class UnslothServer {
 
     const serverConfig = config.get();
     logger.info('Unsloth MCP Server initialized', {
-      version: '2.1.0',
+      version: '2.2.0',
       environment: serverConfig.server.environment,
       cacheEnabled: serverConfig.cache.enabled,
-      logLevel: serverConfig.logging.level
+      logLevel: serverConfig.logging.level,
     });
   }
 
@@ -83,7 +97,9 @@ class UnslothServer {
       return result;
     } catch (error: any) {
       if (error instanceof TimeoutError) {
-        throw new Error(`Operation timed out: ${error.message}. Try reducing the workload or increasing timeout.`);
+        throw new Error(
+          `Operation timed out: ${error.message}. Try reducing the workload or increasing timeout.`
+        );
       }
       if (error instanceof SecurityError) {
         throw new Error(`Security error: ${error.message}`);
@@ -267,7 +283,8 @@ class UnslothServer {
         },
         {
           name: 'train_superbpe_tokenizer',
-          description: 'Train a SuperBPE tokenizer for improved efficiency (up to 33% fewer tokens)',
+          description:
+            'Train a SuperBPE tokenizer for improved efficiency (up to 33% fewer tokens)',
           inputSchema: {
             type: 'object',
             properties: {
@@ -285,7 +302,8 @@ class UnslothServer {
               },
               num_inherit_merges: {
                 type: 'number',
-                description: 'Number of merges to inherit from BPE stage (default: vocab_size * 0.8)',
+                description:
+                  'Number of merges to inherit from BPE stage (default: vocab_size * 0.8)',
               },
             },
             required: ['corpus_path', 'output_path'],
@@ -293,7 +311,8 @@ class UnslothServer {
         },
         {
           name: 'get_model_info',
-          description: 'Get detailed information about a model including architecture, parameters, and capabilities',
+          description:
+            'Get detailed information about a model including architecture, parameters, and capabilities',
           inputSchema: {
             type: 'object',
             properties: {
@@ -307,7 +326,8 @@ class UnslothServer {
         },
         {
           name: 'compare_tokenizers',
-          description: 'Compare tokenization efficiency between different tokenizers (BPE vs SuperBPE)',
+          description:
+            'Compare tokenization efficiency between different tokenizers (BPE vs SuperBPE)',
           inputSchema: {
             type: 'object',
             properties: {
@@ -397,6 +417,250 @@ class UnslothServer {
             required: ['dataset_name', 'output_path'],
           },
         },
+        // ==================== KNOWLEDGE BASE TOOLS ====================
+        {
+          name: 'process_book_image',
+          description:
+            'OCR a book/document image and catalogue the extracted text into the knowledge base',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              image_path: {
+                type: 'string',
+                description: 'Path to the image file (jpg, png, etc.)',
+              },
+              book_title: {
+                type: 'string',
+                description: 'Title of the book (optional)',
+              },
+              author: {
+                type: 'string',
+                description: 'Author of the book (optional)',
+              },
+              chapter: {
+                type: 'string',
+                description: 'Chapter name or number (optional)',
+              },
+              page_numbers: {
+                type: 'string',
+                description: 'Page number(s) (optional)',
+              },
+              category: {
+                type: 'string',
+                description: 'Content category for classification',
+                enum: [
+                  'candlestick_patterns',
+                  'chart_patterns',
+                  'technical_indicators',
+                  'risk_management',
+                  'trading_psychology',
+                  'market_structure',
+                  'options_strategies',
+                  'fundamental_analysis',
+                  'order_flow',
+                  'volume_analysis',
+                  'general',
+                ],
+              },
+              tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Tags for this content (optional)',
+              },
+              ocr_backend: {
+                type: 'string',
+                description: 'OCR backend to use (auto, tesseract, easyocr, claude)',
+                enum: ['auto', 'tesseract', 'easyocr', 'claude'],
+              },
+            },
+            required: ['image_path'],
+          },
+        },
+        {
+          name: 'batch_process_images',
+          description: 'Process multiple book images at once and catalogue them',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              image_paths: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of image file paths',
+              },
+              book_title: {
+                type: 'string',
+                description: 'Title of the book (applies to all)',
+              },
+              author: {
+                type: 'string',
+                description: 'Author of the book (applies to all)',
+              },
+              category: {
+                type: 'string',
+                description: 'Content category',
+                enum: [
+                  'candlestick_patterns',
+                  'chart_patterns',
+                  'technical_indicators',
+                  'risk_management',
+                  'trading_psychology',
+                  'market_structure',
+                  'options_strategies',
+                  'fundamental_analysis',
+                  'order_flow',
+                  'volume_analysis',
+                  'general',
+                ],
+              },
+              ocr_backend: {
+                type: 'string',
+                description: 'OCR backend to use',
+                enum: ['auto', 'tesseract', 'easyocr', 'claude'],
+              },
+            },
+            required: ['image_paths'],
+          },
+        },
+        {
+          name: 'search_knowledge',
+          description: 'Search the knowledge base using full-text search',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Search query',
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum results to return (default: 20)',
+              },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'list_knowledge_by_category',
+          description: 'List knowledge entries by category',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              category: {
+                type: 'string',
+                description: 'Category to filter by',
+                enum: [
+                  'candlestick_patterns',
+                  'chart_patterns',
+                  'technical_indicators',
+                  'risk_management',
+                  'trading_psychology',
+                  'market_structure',
+                  'options_strategies',
+                  'fundamental_analysis',
+                  'order_flow',
+                  'volume_analysis',
+                  'general',
+                ],
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum results to return (default: 50)',
+              },
+            },
+            required: ['category'],
+          },
+        },
+        {
+          name: 'get_knowledge_entry',
+          description: 'Get a specific knowledge entry by ID',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              entry_id: {
+                type: 'string',
+                description: 'The knowledge entry ID',
+              },
+            },
+            required: ['entry_id'],
+          },
+        },
+        {
+          name: 'generate_training_pairs',
+          description: 'Generate training data pairs from knowledge base entries',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              entry_id: {
+                type: 'string',
+                description:
+                  'Generate pairs from specific entry (optional - if not provided, generates from all)',
+              },
+              min_quality_score: {
+                type: 'number',
+                description: 'Minimum quality score for entries (0-100, default: 30)',
+              },
+              pairs_per_entry: {
+                type: 'number',
+                description: 'Number of pairs to generate per entry (default: 3)',
+              },
+              include_system_prompt: {
+                type: 'boolean',
+                description: 'Include system prompts in pairs (default: true)',
+              },
+              generate_synthetic: {
+                type: 'boolean',
+                description: 'Use AI to generate additional synthetic pairs (requires API key)',
+              },
+            },
+          },
+        },
+        {
+          name: 'export_training_data',
+          description: 'Export all training pairs to a file for fine-tuning',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              output_path: {
+                type: 'string',
+                description: 'Path to save the training data file',
+              },
+              format: {
+                type: 'string',
+                description: 'Output format (alpaca, sharegpt, chatml)',
+                enum: ['alpaca', 'sharegpt', 'chatml'],
+              },
+              min_quality_score: {
+                type: 'number',
+                description: 'Minimum quality score to include (default: 0)',
+              },
+            },
+            required: ['output_path', 'format'],
+          },
+        },
+        {
+          name: 'knowledge_stats',
+          description: 'Get statistics about the knowledge base',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+        {
+          name: 'check_ocr_backends',
+          description: 'Check which OCR backends are available on the system',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+        {
+          name: 'list_categories',
+          description: 'List all available knowledge categories with descriptions',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
       ],
     }));
 
@@ -413,7 +677,7 @@ class UnslothServer {
         switch (name) {
           case 'check_installation': {
             const isInstalled = await this.checkUnslothInstallation();
-            
+
             if (!isInstalled) {
               return {
                 content: [
@@ -469,7 +733,7 @@ except Exception as e:
     print(json.dumps({"error": str(e)}))
 `;
             const result = await this.executeUnslothScript(script);
-            
+
             try {
               const models = JSON.parse(result);
               if (models.error) {
@@ -487,7 +751,12 @@ except Exception as e:
           }
 
           case 'load_model': {
-            const { model_name, max_seq_length = 2048, load_in_4bit = true, use_gradient_checkpointing = true } = args as {
+            const {
+              model_name,
+              max_seq_length = 2048,
+              load_in_4bit = true,
+              use_gradient_checkpointing = true,
+            } = args as {
               model_name: string;
               max_seq_length?: number;
               load_in_4bit?: boolean;
@@ -523,13 +792,13 @@ except Exception as e:
     print(json.dumps({"error": str(e), "success": False}))
 `;
             const result = await this.executeUnslothScript(script);
-            
+
             try {
               const modelInfo = JSON.parse(result);
               if (!modelInfo.success) {
                 throw new Error(modelInfo.error);
               }
-              
+
               return {
                 content: [
                   {
@@ -645,13 +914,13 @@ except Exception as e:
     print(json.dumps({"error": str(e), "success": False}))
 `;
             const result = await this.executeUnslothScript(script);
-            
+
             try {
               const trainingResult = JSON.parse(result);
               if (!trainingResult.success) {
                 throw new Error(trainingResult.error);
               }
-              
+
               return {
                 content: [
                   {
@@ -712,13 +981,13 @@ except Exception as e:
     print(json.dumps({"error": str(e), "success": False}))
 `;
             const result = await this.executeUnslothScript(script);
-            
+
             try {
               const generationResult = JSON.parse(result);
               if (!generationResult.success) {
                 throw new Error(generationResult.error);
               }
-              
+
               return {
                 content: [
                   {
@@ -746,7 +1015,7 @@ except Exception as e:
             };
 
             let script = '';
-            
+
             if (export_format === 'gguf') {
               script = `
 import json
@@ -821,15 +1090,15 @@ except Exception as e:
                 isError: true,
               };
             }
-            
+
             const result = await this.executeUnslothScript(script);
-            
+
             try {
               const exportResult = JSON.parse(result);
               if (!exportResult.success) {
                 throw new Error(exportResult.error);
               }
-              
+
               return {
                 content: [
                   {
@@ -1337,11 +1606,435 @@ except Exception as e:
             }
           }
 
-          default:
-            throw new McpError(
-              ErrorCode.MethodNotFound,
-              `Unknown tool: ${name}`
+          // ==================== KNOWLEDGE BASE TOOL HANDLERS ====================
+
+          case 'process_book_image': {
+            const {
+              image_path,
+              book_title,
+              author,
+              chapter,
+              page_numbers,
+              category,
+              tags = [],
+              ocr_backend = 'auto',
+            } = args as {
+              image_path: string;
+              book_title?: string;
+              author?: string;
+              chapter?: string;
+              page_numbers?: string;
+              category?: Category;
+              tags?: string[];
+              ocr_backend?: 'auto' | 'tesseract' | 'easyocr' | 'claude';
+            };
+
+            try {
+              // Process image with OCR
+              const ocrResult = await processImage(image_path, {
+                backend: ocr_backend,
+                enhance_image: true,
+              });
+
+              // Auto-classify content if no category provided
+              const classification = classifyContent(ocrResult.cleaned_text);
+              const finalCategory = category || classification.category;
+              const detectedTopics = classification.detected_topics;
+
+              // Clean the text
+              const cleanedText = cleanText(ocrResult.raw_text);
+
+              // Add to knowledge base
+              const entryId = await knowledgeDb.addEntry({
+                source: {
+                  type: 'book',
+                  book_title,
+                  author,
+                  chapter,
+                  page_numbers,
+                  image_path,
+                  capture_date: new Date().toISOString(),
+                },
+                raw_text: ocrResult.raw_text,
+                cleaned_text: cleanedText,
+                category: finalCategory,
+                topics: detectedTopics,
+                tags,
+                quality_score: Math.round(ocrResult.confidence),
+                ocr_confidence: ocrResult.confidence,
+                manually_reviewed: false,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    entry_id: entryId,
+                    ocr_backend: ocrResult.backend_used,
+                    ocr_confidence: ocrResult.confidence,
+                    processing_time_ms: ocrResult.processing_time_ms,
+                    category: finalCategory,
+                    detected_topics: detectedTopics,
+                    text_preview:
+                      cleanedText.substring(0, 300) + (cleanedText.length > 300 ? '...' : ''),
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error processing book image: ${error.message}`);
+            }
+          }
+
+          case 'batch_process_images': {
+            const {
+              image_paths,
+              book_title,
+              author,
+              category,
+              ocr_backend = 'auto',
+            } = args as {
+              image_paths: string[];
+              book_title?: string;
+              author?: string;
+              category?: Category;
+              ocr_backend?: 'auto' | 'tesseract' | 'easyocr' | 'claude';
+            };
+
+            const results: Array<{ path: string; entry_id?: string; error?: string }> = [];
+
+            for (let i = 0; i < image_paths.length; i++) {
+              const imagePath = image_paths[i];
+              try {
+                const ocrResult = await processImage(imagePath, {
+                  backend: ocr_backend,
+                  enhance_image: true,
+                });
+
+                const classification = classifyContent(ocrResult.cleaned_text);
+                const finalCategory = category || classification.category;
+                const cleanedText = cleanText(ocrResult.raw_text);
+
+                const entryId = await knowledgeDb.addEntry({
+                  source: {
+                    type: 'book',
+                    book_title,
+                    author,
+                    page_numbers: `Image ${i + 1}`,
+                    image_path: imagePath,
+                    capture_date: new Date().toISOString(),
+                  },
+                  raw_text: ocrResult.raw_text,
+                  cleaned_text: cleanedText,
+                  category: finalCategory,
+                  topics: classification.detected_topics,
+                  tags: [],
+                  quality_score: Math.round(ocrResult.confidence),
+                  ocr_confidence: ocrResult.confidence,
+                  manually_reviewed: false,
+                });
+
+                results.push({ path: imagePath, entry_id: entryId });
+              } catch (error: any) {
+                results.push({ path: imagePath, error: error.message });
+              }
+            }
+
+            const successful = results.filter((r) => r.entry_id).length;
+            const failed = results.filter((r) => r.error).length;
+
+            return this.createSuccessResponse(
+              name,
+              startTime,
+              JSON.stringify(
+                {
+                  success: true,
+                  total_images: image_paths.length,
+                  successful,
+                  failed,
+                  results,
+                },
+                null,
+                2
+              )
             );
+          }
+
+          case 'search_knowledge': {
+            const { query, limit = 20 } = args as { query: string; limit?: number };
+
+            try {
+              const entries = await knowledgeDb.searchEntries(query, limit);
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    query,
+                    count: entries.length,
+                    entries,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error searching knowledge base: ${error.message}`);
+            }
+          }
+
+          case 'list_knowledge_by_category': {
+            const { category, limit = 50 } = args as { category: Category; limit?: number };
+
+            try {
+              const entries = await knowledgeDb.listByCategory(category, limit);
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    category,
+                    count: entries.length,
+                    entries,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error listing knowledge entries: ${error.message}`);
+            }
+          }
+
+          case 'get_knowledge_entry': {
+            const { entry_id } = args as { entry_id: string };
+
+            try {
+              const entry = await knowledgeDb.getEntry(entry_id);
+              if (!entry) {
+                return {
+                  content: [{ type: 'text', text: `Knowledge entry not found: ${entry_id}` }],
+                  isError: true,
+                };
+              }
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    entry,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting knowledge entry: ${error.message}`);
+            }
+          }
+
+          case 'generate_training_pairs': {
+            const {
+              entry_id,
+              min_quality_score = 30,
+              pairs_per_entry = 3,
+              include_system_prompt = true,
+              generate_synthetic = false,
+            } = args as {
+              entry_id?: string;
+              min_quality_score?: number;
+              pairs_per_entry?: number;
+              include_system_prompt?: boolean;
+              generate_synthetic?: boolean;
+            };
+
+            try {
+              if (entry_id) {
+                // Generate for specific entry
+                const entry = await knowledgeDb.getEntry(entry_id);
+                if (!entry) {
+                  throw new Error(`Entry not found: ${entry_id}`);
+                }
+
+                let pairs = generateTrainingPairs(entry, {
+                  min_quality_score,
+                  pairs_per_entry,
+                  include_system_prompt,
+                });
+
+                // Optionally generate synthetic pairs
+                if (generate_synthetic) {
+                  const syntheticPairs = await generateSyntheticPairs(
+                    entry.cleaned_text,
+                    entry.category,
+                    pairs_per_entry
+                  );
+                  pairs = [...pairs, ...syntheticPairs];
+                }
+
+                // Store pairs in database
+                for (const pair of pairs) {
+                  await knowledgeDb.addTrainingPair(entry_id, pair);
+                }
+
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify(
+                    {
+                      success: true,
+                      entry_id,
+                      pairs_generated: pairs.length,
+                      pairs,
+                    },
+                    null,
+                    2
+                  )
+                );
+              } else {
+                // Generate for all entries
+                const result = await generateFromDatabase(knowledgeDb, {
+                  min_quality_score,
+                  pairs_per_entry,
+                  include_system_prompt,
+                });
+
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify(
+                    {
+                      success: true,
+                      ...result,
+                    },
+                    null,
+                    2
+                  )
+                );
+              }
+            } catch (error: any) {
+              throw new Error(`Error generating training pairs: ${error.message}`);
+            }
+          }
+
+          case 'export_training_data': {
+            const {
+              output_path,
+              format,
+              min_quality_score = 0,
+            } = args as {
+              output_path: string;
+              format: 'alpaca' | 'sharegpt' | 'chatml';
+              min_quality_score?: number;
+            };
+
+            try {
+              const result = await knowledgeDb.exportTrainingData(
+                output_path,
+                format,
+                min_quality_score
+              );
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    format,
+                    ...result,
+                    message: `Training data exported to ${output_path}. Ready for fine-tuning!`,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error exporting training data: ${error.message}`);
+            }
+          }
+
+          case 'knowledge_stats': {
+            try {
+              const stats = await knowledgeDb.getStats();
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    ...stats,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting knowledge stats: ${error.message}`);
+            }
+          }
+
+          case 'check_ocr_backends': {
+            try {
+              const backends = await checkOCRBackends();
+              const available = Object.entries(backends)
+                .filter(([, v]) => v)
+                .map(([k]) => k);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    backends,
+                    available,
+                    recommendation: backends.tesseract
+                      ? 'tesseract (fast, good for clear text)'
+                      : backends.easyocr
+                        ? 'easyocr (slower, better accuracy)'
+                        : backends.claude
+                          ? 'claude (best for charts/diagrams, requires API key)'
+                          : 'No OCR backend available. Install pytesseract or easyocr.',
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error checking OCR backends: ${error.message}`);
+            }
+          }
+
+          case 'list_categories': {
+            const categories = Object.entries(CATEGORY_DEFINITIONS).map(([key, value]) => ({
+              id: key,
+              description: value.description,
+              keywords: value.keywords.slice(0, 5),
+              examples: value.examples.slice(0, 2),
+            }));
+
+            return this.createSuccessResponse(
+              name,
+              startTime,
+              JSON.stringify(
+                {
+                  success: true,
+                  categories,
+                },
+                null,
+                2
+              )
+            );
+          }
+
+          default:
+            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
         }
       } catch (error: any) {
         // Track failed execution
@@ -1379,7 +2072,10 @@ except Exception as e:
             'Ensure the file exists before proceeding',
             'Use absolute paths when possible',
           ];
-        } else if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+        } else if (
+          error.message.includes('EACCES') ||
+          error.message.includes('permission denied')
+        ) {
           errorMessage = `Permission denied: ${error.message}`;
           suggestions = [
             'Check file permissions',
@@ -1396,9 +2092,10 @@ except Exception as e:
           ];
         }
 
-        const responseText = suggestions.length > 0
-          ? `${errorMessage}\n\nSuggestions:\n${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
-          : errorMessage;
+        const responseText =
+          suggestions.length > 0
+            ? `${errorMessage}\n\nSuggestions:\n${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+            : errorMessage;
 
         return {
           content: [
