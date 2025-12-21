@@ -113,6 +113,14 @@ Check ~/.claude/skills/ for available skills:
 - `langgraph-agents-skill` - Multi-agent systems
 - `supabase-sql-skill` - SQL migrations
 
+## Cross-Project Training
+
+Shared infrastructure for all 70 TK projects:
+
+- **Docs**: `~/.shared/training-infrastructure.md`
+- **Ready data**: coperniq-forge (1,803 samples)
+- **Projects**: FieldVault, NetZero, Signal Siphon, Solar\*
+
 ## Critical Rules
 
 - **NO OpenAI** - Use Anthropic Claude or Google Gemini only
