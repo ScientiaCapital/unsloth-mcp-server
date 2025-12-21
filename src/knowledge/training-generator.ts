@@ -64,6 +64,28 @@ export const SYSTEM_PROMPTS = {
   communication_coach: `You are a communication expert who teaches effective speaking, listening, and interpersonal skills. You help people become more persuasive and influential communicators.`,
 
   public_speaking_coach: `You are a professional speaking coach who has trained TEDx speakers and executives. You teach presentation skills, storytelling, and confident delivery.`,
+
+  // Energy & MEP
+  energy_engineer: `You are a licensed professional engineer specializing in energy systems, power distribution, and renewable energy. You explain complex electrical and energy concepts in practical terms for contractors and installers.`,
+
+  solar_specialist: `You are a NABCEP-certified solar installer and designer with extensive experience in residential and commercial PV systems. You teach proper installation techniques, system sizing, and code compliance.`,
+
+  electrical_expert: `You are a master electrician and electrical contractor with decades of experience. You explain NEC code requirements, proper wiring methods, and troubleshooting techniques.`,
+
+  hvac_technician: `You are an HVAC master technician and instructor who teaches system design, installation, and service. You explain heating, cooling, and refrigeration concepts clearly.`,
+
+  mep_engineer: `You are a licensed MEP (Mechanical, Electrical, Plumbing) engineer who designs building systems. You explain engineering calculations, code compliance, and best practices.`,
+
+  // Trades & Construction
+  estimator: `You are a senior construction estimator who has bid millions in projects. You teach accurate takeoffs, labor estimation, and competitive bidding strategies.`,
+
+  project_manager: `You are a PMP-certified construction project manager with experience on large commercial projects. You teach scheduling, coordination, and project controls.`,
+
+  code_inspector: `You are a certified building inspector and plans examiner. You explain code requirements, inspection processes, and common violations to avoid.`,
+
+  safety_officer: `You are an OSHA-certified safety professional and construction safety trainer. You teach jobsite safety, hazard recognition, and compliance requirements.`,
+
+  contractor_coach: `You are a successful contractor who has built and scaled multiple construction businesses. You teach business operations, client relations, and profitable bidding.`,
 };
 
 // ============================================================================
@@ -272,6 +294,110 @@ const QUESTION_TEMPLATES: Record<Category, string[]> = {
     'How do I approach {topic}?',
     'What makes {topic} successful?',
     'How do I follow up after {topic}?',
+    'What are best practices for {topic}?',
+  ],
+
+  // Energy & Utilities
+  energy_systems: [
+    'How does {topic} work in power systems?',
+    'What should I know about {topic}?',
+    'How do I calculate {topic}?',
+    'What are the requirements for {topic}?',
+  ],
+  solar_power: [
+    'How do I size {topic} for a solar system?',
+    'What is the proper way to install {topic}?',
+    'What code requirements apply to {topic}?',
+    'How do I troubleshoot {topic} issues?',
+  ],
+  electrical_systems: [
+    'What does the NEC say about {topic}?',
+    'How do I properly install {topic}?',
+    'What are the calculations for {topic}?',
+    'What are common mistakes with {topic}?',
+  ],
+  hvac_systems: [
+    'How do I size {topic}?',
+    'What is the proper procedure for {topic}?',
+    'How do I troubleshoot {topic}?',
+    'What are the efficiency considerations for {topic}?',
+  ],
+
+  // MEP Engineering
+  mechanical_engineering: [
+    'How do I calculate {topic}?',
+    'What are the design considerations for {topic}?',
+    'How do I select the right {topic}?',
+    'What codes apply to {topic}?',
+  ],
+  plumbing_systems: [
+    'What are the code requirements for {topic}?',
+    'How do I properly install {topic}?',
+    'What sizing calculations apply to {topic}?',
+    'How do I troubleshoot {topic}?',
+  ],
+  fire_protection: [
+    'What does NFPA require for {topic}?',
+    'How do I design {topic} systems?',
+    'What are the inspection requirements for {topic}?',
+    'How do I calculate {topic}?',
+  ],
+  building_automation: [
+    'How do I program {topic}?',
+    'What is the sequence of operations for {topic}?',
+    'How do I integrate {topic}?',
+    'What are best practices for {topic}?',
+  ],
+
+  // Trades & Construction
+  estimating: [
+    'How do I estimate {topic}?',
+    'What is the standard unit cost for {topic}?',
+    'How do I do a takeoff for {topic}?',
+    'What labor factors apply to {topic}?',
+  ],
+  project_management_construction: [
+    'How do I manage {topic} on a project?',
+    'What is the process for {topic}?',
+    'How do I handle {topic} issues?',
+    'What documentation is needed for {topic}?',
+  ],
+  building_codes: [
+    'What does the code require for {topic}?',
+    'How do I get a permit for {topic}?',
+    'What are common {topic} violations?',
+    'How do I pass inspection for {topic}?',
+  ],
+  safety_compliance: [
+    'What are OSHA requirements for {topic}?',
+    'How do I train workers on {topic}?',
+    'What PPE is required for {topic}?',
+    'How do I document {topic}?',
+  ],
+  blueprints_drawings: [
+    'How do I read {topic} on blueprints?',
+    'What does this {topic} symbol mean?',
+    'How do I interpret {topic} dimensions?',
+    'What information is shown on {topic}?',
+  ],
+
+  // Contractor Business
+  contractor_business: [
+    'What are the requirements for {topic}?',
+    'How do I set up {topic} for my business?',
+    'What should I know about {topic}?',
+    'How do successful contractors handle {topic}?',
+  ],
+  bidding_proposals: [
+    'How do I write a {topic}?',
+    'What should be included in {topic}?',
+    'How do I price {topic} competitively?',
+    'What are common mistakes with {topic}?',
+  ],
+  client_management: [
+    'How do I handle {topic} with clients?',
+    'What is the best approach to {topic}?',
+    'How do I communicate about {topic}?',
     'What are best practices for {topic}?',
   ],
 

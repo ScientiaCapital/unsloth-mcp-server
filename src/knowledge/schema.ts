@@ -87,6 +87,26 @@ export type Category =
   | 'communication'
   | 'public_speaking'
   | 'networking'
+  // Energy & Utilities
+  | 'energy_systems'
+  | 'solar_power'
+  | 'electrical_systems'
+  | 'hvac_systems'
+  // MEP Engineering
+  | 'mechanical_engineering'
+  | 'plumbing_systems'
+  | 'fire_protection'
+  | 'building_automation'
+  // Trades & Construction
+  | 'estimating'
+  | 'project_management_construction'
+  | 'building_codes'
+  | 'safety_compliance'
+  | 'blueprints_drawings'
+  // Contractor Business
+  | 'contractor_business'
+  | 'bidding_proposals'
+  | 'client_management'
   // General
   | 'general';
 
@@ -698,6 +718,300 @@ export const CATEGORY_DEFINITIONS: Record<
       'mastermind',
     ],
     examples: ['strategic networking', 'providing value first', 'mastermind groups'],
+  },
+
+  // ==================== ENERGY & UTILITIES ====================
+  energy_systems: {
+    description: 'Energy systems, power generation, and utilities',
+    keywords: [
+      'energy',
+      'power',
+      'grid',
+      'utility',
+      'renewable',
+      'efficiency',
+      'load',
+      'demand',
+      'kWh',
+      'megawatt',
+      'transformer',
+      'substation',
+    ],
+    examples: ['grid-tied systems', 'peak demand management', 'energy audits'],
+  },
+  solar_power: {
+    description: 'Solar PV systems, installation, and design',
+    keywords: [
+      'solar',
+      'photovoltaic',
+      'PV',
+      'inverter',
+      'panel',
+      'module',
+      'string',
+      'array',
+      'net metering',
+      'STC',
+      'irradiance',
+      'azimuth',
+      'tilt',
+    ],
+    examples: ['solar array sizing', 'inverter selection', 'roof mount installation'],
+  },
+  electrical_systems: {
+    description: 'Electrical systems, wiring, and NEC code',
+    keywords: [
+      'electrical',
+      'wiring',
+      'circuit',
+      'breaker',
+      'panel',
+      'NEC',
+      'amperage',
+      'voltage',
+      'conductor',
+      'conduit',
+      'grounding',
+      'bonding',
+      'service',
+      'feeder',
+    ],
+    examples: ['NEC code compliance', 'load calculations', 'service entrance sizing'],
+  },
+  hvac_systems: {
+    description: 'Heating, ventilation, air conditioning, and refrigeration',
+    keywords: [
+      'HVAC',
+      'heating',
+      'cooling',
+      'ventilation',
+      'refrigeration',
+      'BTU',
+      'tonnage',
+      'CFM',
+      'ductwork',
+      'furnace',
+      'condenser',
+      'compressor',
+      'refrigerant',
+      'heat pump',
+    ],
+    examples: ['load calculations', 'duct sizing', 'refrigerant charging'],
+  },
+
+  // ==================== MEP ENGINEERING ====================
+  mechanical_engineering: {
+    description: 'Mechanical systems design and engineering',
+    keywords: [
+      'mechanical',
+      'piping',
+      'pump',
+      'valve',
+      'pressure',
+      'flow rate',
+      'GPM',
+      'PSI',
+      'chiller',
+      'boiler',
+      'heat exchanger',
+      'expansion tank',
+    ],
+    examples: ['pipe sizing calculations', 'pump selection', 'hydronic system design'],
+  },
+  plumbing_systems: {
+    description: 'Plumbing design, installation, and codes',
+    keywords: [
+      'plumbing',
+      'drain',
+      'waste',
+      'vent',
+      'DWV',
+      'water supply',
+      'fixture',
+      'trap',
+      'backflow',
+      'water heater',
+      'sanitary',
+      'storm',
+      'sewer',
+    ],
+    examples: ['DWV system design', 'water heater sizing', 'backflow prevention'],
+  },
+  fire_protection: {
+    description: 'Fire protection systems and NFPA codes',
+    keywords: [
+      'sprinkler',
+      'fire alarm',
+      'NFPA',
+      'standpipe',
+      'suppression',
+      'detection',
+      'egress',
+      'fire rating',
+      'smoke detector',
+      'fire pump',
+      'hydrant',
+    ],
+    examples: ['sprinkler system design', 'NFPA 13 compliance', 'fire alarm zoning'],
+  },
+  building_automation: {
+    description: 'Building automation and control systems',
+    keywords: [
+      'BAS',
+      'BMS',
+      'DDC',
+      'controls',
+      'thermostat',
+      'sensor',
+      'actuator',
+      'setpoint',
+      'sequence of operations',
+      'PLC',
+      'SCADA',
+      'integration',
+    ],
+    examples: ['DDC programming', 'sequence of operations', 'system integration'],
+  },
+
+  // ==================== TRADES & CONSTRUCTION ====================
+  estimating: {
+    description: 'Construction estimating and cost analysis',
+    keywords: [
+      'estimate',
+      'takeoff',
+      'quantity',
+      'material',
+      'labor',
+      'overhead',
+      'profit',
+      'markup',
+      'unit cost',
+      'RSMeans',
+      'square foot',
+      'linear foot',
+    ],
+    examples: ['quantity takeoffs', 'labor hour estimation', 'markup calculations'],
+  },
+  project_management_construction: {
+    description: 'Construction project management and scheduling',
+    keywords: [
+      'schedule',
+      'Gantt',
+      'critical path',
+      'milestone',
+      'submittal',
+      'RFI',
+      'change order',
+      'punch list',
+      'closeout',
+      'progress',
+      'coordination',
+    ],
+    examples: ['critical path scheduling', 'change order management', 'project closeout'],
+  },
+  building_codes: {
+    description: 'Building codes, permits, and inspections',
+    keywords: [
+      'code',
+      'permit',
+      'inspection',
+      'IBC',
+      'IRC',
+      'occupancy',
+      'egress',
+      'accessibility',
+      'ADA',
+      'setback',
+      'zoning',
+      'variance',
+    ],
+    examples: ['IBC compliance', 'permit application', 'inspection checklist'],
+  },
+  safety_compliance: {
+    description: 'Construction safety and OSHA compliance',
+    keywords: [
+      'OSHA',
+      'safety',
+      'PPE',
+      'fall protection',
+      'scaffold',
+      'excavation',
+      'lockout tagout',
+      'LOTO',
+      'toolbox talk',
+      'incident',
+      'hazard',
+    ],
+    examples: ['OSHA compliance', 'fall protection requirements', 'safety training'],
+  },
+  blueprints_drawings: {
+    description: 'Blueprint reading and construction drawings',
+    keywords: [
+      'blueprint',
+      'drawing',
+      'plan',
+      'elevation',
+      'section',
+      'detail',
+      'scale',
+      'dimension',
+      'symbol',
+      'legend',
+      'specification',
+      'shop drawing',
+    ],
+    examples: ['blueprint reading', 'shop drawing review', 'as-built documentation'],
+  },
+
+  // ==================== CONTRACTOR BUSINESS ====================
+  contractor_business: {
+    description: 'Contractor business operations and licensing',
+    keywords: [
+      'contractor',
+      'license',
+      'insurance',
+      'bond',
+      'liability',
+      'workers comp',
+      'subcontractor',
+      'crew',
+      'overhead',
+      'cash flow',
+    ],
+    examples: ['contractor licensing', 'insurance requirements', 'subcontractor management'],
+  },
+  bidding_proposals: {
+    description: 'Bidding strategies and proposal writing',
+    keywords: [
+      'bid',
+      'proposal',
+      'quote',
+      'RFP',
+      'scope',
+      'terms',
+      'conditions',
+      'exclusions',
+      'qualifications',
+      'warranty',
+      'competitive',
+    ],
+    examples: ['bid preparation', 'proposal writing', 'scope definition'],
+  },
+  client_management: {
+    description: 'Client relations and project communication',
+    keywords: [
+      'client',
+      'customer',
+      'homeowner',
+      'owner',
+      'communication',
+      'expectation',
+      'satisfaction',
+      'complaint',
+      'warranty',
+      'callback',
+    ],
+    examples: ['client communication', 'managing expectations', 'handling callbacks'],
   },
 
   // ==================== GENERAL ====================
