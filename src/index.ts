@@ -31,6 +31,7 @@ import {
   Category,
   CATEGORY_DEFINITIONS,
 } from './knowledge/index.js';
+import { getRunPodClient, RunPodClient } from './utils/runpod.js';
 
 const execPromise = promisify(exec);
 
@@ -659,6 +660,226 @@ class UnslothServer {
           inputSchema: {
             type: 'object',
             properties: {},
+          },
+        },
+        // RunPod GPU Management Tools
+        {
+          name: 'runpod_list_pods',
+          description: 'List all RunPod pods with their status, GPU info, and costs',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+        {
+          name: 'runpod_get_pod',
+          description: 'Get detailed information about a specific RunPod pod',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod to get info for',
+              },
+            },
+            required: ['pod_id'],
+          },
+        },
+        {
+          name: 'runpod_check_gpus',
+          description: 'Check available GPU types and their pricing on RunPod',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              min_vram_gb: {
+                type: 'number',
+                description: 'Minimum VRAM in GB (default: 24 for fine-tuning)',
+              },
+            },
+          },
+        },
+        {
+          name: 'runpod_create_pod',
+          description: 'Create a new RunPod pod for fine-tuning',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Name for the pod',
+              },
+              gpu_type: {
+                type: 'string',
+                description: 'GPU type ID (e.g., "NVIDIA RTX A5000")',
+              },
+              gpu_count: {
+                type: 'number',
+                description: 'Number of GPUs (default: 1)',
+              },
+              volume_gb: {
+                type: 'number',
+                description: 'Volume size in GB (default: 30)',
+              },
+              image: {
+                type: 'string',
+                description: 'Docker image (default: pytorch with CUDA)',
+              },
+            },
+            required: ['name', 'gpu_type'],
+          },
+        },
+        {
+          name: 'runpod_start_pod',
+          description: 'Start a stopped RunPod pod',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod to start',
+              },
+            },
+            required: ['pod_id'],
+          },
+        },
+        {
+          name: 'runpod_stop_pod',
+          description: 'Stop a running RunPod pod (keeps volume data)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod to stop',
+              },
+            },
+            required: ['pod_id'],
+          },
+        },
+        {
+          name: 'runpod_terminate_pod',
+          description: 'Terminate a RunPod pod (deletes everything including volume)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod to terminate',
+              },
+              confirm: {
+                type: 'boolean',
+                description: 'Must be true to confirm termination',
+              },
+            },
+            required: ['pod_id', 'confirm'],
+          },
+        },
+        {
+          name: 'runpod_start_training',
+          description: 'Start a fine-tuning job on a RunPod pod',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod to run training on',
+              },
+              base_model: {
+                type: 'string',
+                description: 'Base model to fine-tune (e.g., "unsloth/Llama-3.2-1B")',
+              },
+              dataset_path: {
+                type: 'string',
+                description: 'Path to training dataset (JSON/JSONL)',
+              },
+              output_dir: {
+                type: 'string',
+                description: 'Output directory for the model',
+              },
+              lora_r: {
+                type: 'number',
+                description: 'LoRA rank (default: 16)',
+              },
+              lora_alpha: {
+                type: 'number',
+                description: 'LoRA alpha (default: 32)',
+              },
+              learning_rate: {
+                type: 'number',
+                description: 'Learning rate (default: 2e-4)',
+              },
+              epochs: {
+                type: 'number',
+                description: 'Number of training epochs (default: 3)',
+              },
+              batch_size: {
+                type: 'number',
+                description: 'Batch size (default: 4)',
+              },
+              max_seq_length: {
+                type: 'number',
+                description: 'Maximum sequence length (default: 2048)',
+              },
+            },
+            required: ['pod_id', 'base_model', 'dataset_path', 'output_dir'],
+          },
+        },
+        {
+          name: 'runpod_get_training_status',
+          description: 'Get the status and progress of a training job',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod running training',
+              },
+            },
+            required: ['pod_id'],
+          },
+        },
+        {
+          name: 'runpod_get_training_logs',
+          description: 'Get training logs from a RunPod pod',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              pod_id: {
+                type: 'string',
+                description: 'The ID of the pod',
+              },
+              lines: {
+                type: 'number',
+                description: 'Number of log lines to retrieve (default: 100)',
+              },
+            },
+            required: ['pod_id'],
+          },
+        },
+        {
+          name: 'runpod_estimate_cost',
+          description: 'Estimate the cost of a fine-tuning job',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dataset_tokens: {
+                type: 'number',
+                description: 'Total tokens in the dataset',
+              },
+              base_model: {
+                type: 'string',
+                description: 'Base model name',
+              },
+              gpu_cost_per_hour: {
+                type: 'number',
+                description: 'GPU cost per hour (default: 0.16)',
+              },
+              epochs: {
+                type: 'number',
+                description: 'Number of epochs (default: 3)',
+              },
+            },
+            required: ['dataset_tokens', 'base_model'],
           },
         },
       ],
@@ -2031,6 +2252,458 @@ except Exception as e:
                 2
               )
             );
+          }
+
+          // ================================================================
+          // RunPod GPU Management Tools
+          // ================================================================
+
+          case 'runpod_list_pods': {
+            try {
+              const client = getRunPodClient();
+              const pods = await client.listPods();
+
+              const podSummary = pods.map((pod) => ({
+                id: pod.id,
+                name: pod.name,
+                status: pod.desiredStatus,
+                gpu: pod.machine?.gpuTypeId,
+                gpuCount: pod.gpuCount,
+                costPerHr: pod.costPerHr,
+                uptime: pod.runtime?.uptimeInSeconds
+                  ? `${Math.round(pod.runtime.uptimeInSeconds / 60)} minutes`
+                  : 'stopped',
+                gpuUtilization: pod.runtime?.gpus?.[0]?.gpuUtilPercent
+                  ? `${pod.runtime.gpus[0].gpuUtilPercent}%`
+                  : 'N/A',
+              }));
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify({ success: true, pods: podSummary }, null, 2)
+              );
+            } catch (error: any) {
+              throw new Error(`Error listing pods: ${error.message}`);
+            }
+          }
+
+          case 'runpod_get_pod': {
+            const { pod_id } = args as { pod_id: string };
+
+            try {
+              const client = getRunPodClient();
+              const pod = await client.getPod(pod_id);
+
+              if (!pod) {
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify({ success: false, error: `Pod ${pod_id} not found` }, null, 2)
+                );
+              }
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify({ success: true, pod }, null, 2)
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting pod: ${error.message}`);
+            }
+          }
+
+          case 'runpod_check_gpus': {
+            const { min_vram_gb = 24 } = args as { min_vram_gb?: number };
+
+            try {
+              const client = getRunPodClient();
+              const gpuTypes = await client.getGpuTypes();
+
+              // Filter by VRAM and availability, sort by VRAM
+              const available = gpuTypes
+                .filter((gpu) => {
+                  const hasCapacity = gpu.secureCloud || gpu.communityCloud;
+                  const hasVram = gpu.memoryInGb >= min_vram_gb;
+                  return hasCapacity && hasVram;
+                })
+                .map((gpu) => ({
+                  id: gpu.id,
+                  name: gpu.displayName,
+                  vram: `${gpu.memoryInGb}GB`,
+                  secureCloud: gpu.secureCloud,
+                  communityCloud: gpu.communityCloud,
+                }))
+                .sort((a, b) => parseInt(a.vram) - parseInt(b.vram));
+
+              const bestGpu = await client.findBestAvailableGpu(min_vram_gb);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    minVramFilter: `${min_vram_gb}GB`,
+                    availableGpus: available,
+                    recommendation: bestGpu
+                      ? `Recommended: ${bestGpu.displayName} (${bestGpu.memoryInGb}GB VRAM)`
+                      : 'No GPUs available meeting requirements',
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: unknown) {
+              throw new Error(
+                `Error checking GPUs: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+            }
+          }
+
+          case 'runpod_create_pod': {
+            const {
+              name: podName,
+              gpu_type,
+              gpu_count = 1,
+              volume_gb = 30,
+              image,
+            } = args as {
+              name: string;
+              gpu_type: string;
+              gpu_count?: number;
+              volume_gb?: number;
+              image?: string;
+            };
+
+            try {
+              const client = getRunPodClient();
+
+              // Check GPU availability first
+              const availability = await client.checkGpuAvailability(gpu_type);
+              if (!availability.available) {
+                const bestAlt = await client.findBestAvailableGpu(24);
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify(
+                    {
+                      success: false,
+                      error: `GPU type ${gpu_type} is not available`,
+                      suggestion: bestAlt
+                        ? `Try ${bestAlt.displayName} instead (${bestAlt.memoryInGb}GB VRAM)`
+                        : 'No suitable GPUs available right now',
+                    },
+                    null,
+                    2
+                  )
+                );
+              }
+
+              const pod = await client.createPod({
+                name: podName,
+                gpuTypeId: gpu_type,
+                gpuCount: gpu_count,
+                volumeInGb: volume_gb,
+                imageName: image,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    message: `Pod ${pod.name} created successfully`,
+                    pod: {
+                      id: pod.id,
+                      name: pod.name,
+                      status: pod.desiredStatus,
+                      costPerHr: pod.costPerHr,
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error creating pod: ${error.message}`);
+            }
+          }
+
+          case 'runpod_start_pod': {
+            const { pod_id } = args as { pod_id: string };
+
+            try {
+              const client = getRunPodClient();
+              const pod = await client.startPod(pod_id);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    message: `Pod ${pod.name} starting`,
+                    pod: {
+                      id: pod.id,
+                      name: pod.name,
+                      status: pod.desiredStatus,
+                      costPerHr: pod.costPerHr,
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              // Check if it's a GPU availability issue
+              if (error.message.includes('GPU') || error.message.includes('available')) {
+                const client = getRunPodClient();
+                const bestAlt = await client.findBestAvailableGpu(24);
+                throw new Error(
+                  `${error.message}. ${
+                    bestAlt
+                      ? `Suggested alternative: ${bestAlt.displayName} (${bestAlt.memoryInGb}GB VRAM)`
+                      : 'No suitable GPUs available. Try again later.'
+                  }`
+                );
+              }
+              throw new Error(`Error starting pod: ${error.message}`);
+            }
+          }
+
+          case 'runpod_stop_pod': {
+            const { pod_id } = args as { pod_id: string };
+
+            try {
+              const client = getRunPodClient();
+              const pod = await client.stopPod(pod_id);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    message: `Pod ${pod.name} stopped. Volume data preserved.`,
+                    pod: {
+                      id: pod.id,
+                      name: pod.name,
+                      status: pod.desiredStatus,
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error stopping pod: ${error.message}`);
+            }
+          }
+
+          case 'runpod_terminate_pod': {
+            const { pod_id, confirm } = args as { pod_id: string; confirm: boolean };
+
+            if (!confirm) {
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: false,
+                    error: 'Termination not confirmed. Set confirm=true to proceed.',
+                    warning: 'This will permanently delete the pod and all its data!',
+                  },
+                  null,
+                  2
+                )
+              );
+            }
+
+            try {
+              const client = getRunPodClient();
+              await client.terminatePod(pod_id);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    message: `Pod ${pod_id} terminated. All data has been deleted.`,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error terminating pod: ${error.message}`);
+            }
+          }
+
+          case 'runpod_start_training': {
+            const {
+              pod_id,
+              base_model,
+              dataset_path,
+              output_dir,
+              lora_r,
+              lora_alpha,
+              learning_rate,
+              epochs,
+              batch_size,
+              max_seq_length,
+            } = args as {
+              pod_id: string;
+              base_model: string;
+              dataset_path: string;
+              output_dir: string;
+              lora_r?: number;
+              lora_alpha?: number;
+              learning_rate?: number;
+              epochs?: number;
+              batch_size?: number;
+              max_seq_length?: number;
+            };
+
+            try {
+              const client = getRunPodClient();
+
+              // Check if pod is running
+              const pod = await client.getPod(pod_id);
+              if (!pod || !pod.runtime) {
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify(
+                    {
+                      success: false,
+                      error: `Pod ${pod_id} is not running. Start it first with runpod_start_pod.`,
+                    },
+                    null,
+                    2
+                  )
+                );
+              }
+
+              const job = await client.startTrainingJob(pod_id, {
+                baseModel: base_model,
+                datasetPath: dataset_path,
+                outputDir: output_dir,
+                loraR: lora_r,
+                loraAlpha: lora_alpha,
+                learningRate: learning_rate,
+                epochs: epochs,
+                batchSize: batch_size,
+                maxSeqLength: max_seq_length,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    message: 'Training job started',
+                    job: {
+                      id: job.id,
+                      status: job.status,
+                      baseModel: base_model,
+                      outputDir: output_dir,
+                    },
+                    nextSteps: [
+                      'Use runpod_get_training_status to monitor progress',
+                      'Use runpod_get_training_logs to view training output',
+                    ],
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error starting training: ${error.message}`);
+            }
+          }
+
+          case 'runpod_get_training_status': {
+            const { pod_id } = args as { pod_id: string };
+
+            try {
+              const client = getRunPodClient();
+              const status = await client.getTrainingStatus(pod_id);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify({ success: true, training: status }, null, 2)
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting training status: ${error.message}`);
+            }
+          }
+
+          case 'runpod_get_training_logs': {
+            const { pod_id, lines = 100 } = args as { pod_id: string; lines?: number };
+
+            try {
+              const client = getRunPodClient();
+              const logs = await client.getTrainingLogs(pod_id, lines);
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify({ success: true, logs }, null, 2)
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting training logs: ${error.message}`);
+            }
+          }
+
+          case 'runpod_estimate_cost': {
+            const {
+              dataset_tokens,
+              base_model,
+              gpu_cost_per_hour = 0.16,
+              epochs = 3,
+            } = args as {
+              dataset_tokens: number;
+              base_model: string;
+              gpu_cost_per_hour?: number;
+              epochs?: number;
+            };
+
+            try {
+              const client = getRunPodClient();
+              const estimate = client.estimateTrainingCost(
+                dataset_tokens,
+                base_model,
+                gpu_cost_per_hour,
+                epochs
+              );
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    estimate: {
+                      ...estimate,
+                      datasetTokens: dataset_tokens,
+                      baseModel: base_model,
+                      epochs: epochs,
+                      gpuCostPerHour: gpu_cost_per_hour,
+                      summary: `Estimated ${estimate.estimatedHours} hours at $${gpu_cost_per_hour}/hr = $${estimate.estimatedCost}`,
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error estimating cost: ${error.message}`);
+            }
           }
 
           default:
