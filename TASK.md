@@ -1,45 +1,63 @@
 # Unsloth MCP Server - Current Tasks
 
-## Active Sprint: RunPod Integration
+## Active Sprint: Cross-Project Training Infrastructure
 
 ### In Progress
 
-- [ ] **Add RunPod API key to project .env**
-  - Source: ai-development-cockpit/.env
-  - Verify API connectivity
+- [ ] **Test RunPod training end-to-end with real data**
+  - Use coperniq-forge training samples (1,803 ready)
+  - Verify MCP tools work from Claude Code
+  - Test model artifact retrieval
 
 ### Up Next
 
-- [ ] **Create RunPod API client module**
-  - `src/utils/runpod.ts`
-  - Pod management functions
-  - Error handling for API calls
+- [ ] **Add cost tracking dashboard**
+  - Real-time GPU usage tracking
+  - Cost alerts when threshold exceeded
+  - History of training jobs
 
-- [ ] **Add pod management tools**
-  - `runpod_list_pods` - List available pods
-  - `runpod_create_pod` - Spin up new pod
-  - `runpod_start_pod` / `runpod_stop_pod`
-  - `runpod_terminate_pod`
+- [ ] **Checkpoint management**
+  - Save/load training checkpoints
+  - Resume interrupted training
+  - Checkpoint comparison
 
-- [ ] **Add training job tools**
-  - `runpod_start_training` - Submit job
-  - `runpod_get_training_logs` - Stream output
-  - `runpod_download_model` - Get artifacts
-
-### Testing Requirements
-
-- [ ] Unit tests for RunPod client
-- [ ] Integration tests with mock API
-- [ ] End-to-end test with real pod
+- [ ] **Multi-project training support**
+  - Template for new projects
+  - Shared infrastructure docs (/.shared/)
+  - FieldVault, NetZero integrations
 
 ## Recently Completed
 
-- [x] MCP server v2.1.0 (12 tools)
-- [x] Production infrastructure
-- [x] 43 test cases
-- [x] Claude Skills integration
+### v2.3.0 - RunPod Integration [DONE]
+
+- [x] RunPod API client (src/utils/runpod.ts)
+- [x] 11 RunPod tools (create, start, stop, terminate, etc.)
+- [x] Training job submission
+- [x] Real-time training logs
+- [x] Cost estimation
+
+### v2.2.0 - Knowledge Capture [DONE]
+
+- [x] 10 knowledge capture tools
+- [x] Multi-engine OCR (Tesseract, EasyOCR, Claude Vision)
+- [x] Training pair generation
+- [x] Export to Alpaca/ShareGPT/ChatML
+
+### v2.1.0 - Production Infrastructure [DONE]
+
+- [x] 12 core MCP tools
+- [x] Configuration system
+- [x] Caching layer
+- [x] Winston logging
+- [x] 87 test cases
 - [x] Pre-commit hooks
-- [x] Docker configuration
+
+## Security Audit (2025-12-21)
+
+- [x] Secrets scan: PASSED (no hardcoded keys)
+- [x] Git history: PASSED (template strings only)
+- [x] Dependencies: PASSED (0 vulnerabilities after npm audit fix)
+- [x] Env audit: PASSED (.env in .gitignore)
 
 ## Blocked
 
@@ -57,7 +75,13 @@ npm run start
 # CLI dashboard
 npm run cli
 
-# Check pod status (once integrated)
-curl -H "Authorization: Bearer $RUNPOD_API_KEY" \
-  https://api.runpod.io/v2/pod/yopwr0r7v1pf9j
+# Check RunPod pods
+npx ts-node -e "import {listPods} from './src/utils/runpod'; listPods().then(console.log)"
 ```
+
+## Related Projects
+
+- **coperniq-forge**: Sales email training (1,803 samples ready)
+- **FieldVault**: Field service dispatcher
+- **NetZero**: Carbon accounting
+- **Shared infra**: ~/.shared/training-infrastructure.md

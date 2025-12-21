@@ -50,37 +50,52 @@ Enable Claude Code users to fine-tune LLMs efficiently through an MCP interface,
 - [x] 43 comprehensive tests
 - [x] Pre-commit hooks (Husky)
 
+### Phase 4: Knowledge Capture (v2.2.0) [DONE]
+
+- [x] Multi-engine OCR (Tesseract, EasyOCR, Claude Vision)
+- [x] Knowledge database (SQLite)
+- [x] AI-powered text enhancement
+- [x] Training pair generation
+- [x] Export to Alpaca/ShareGPT/ChatML
+- [x] 10 knowledge tools
+
+### Phase 5: RunPod Integration (v2.3.0) [DONE]
+
+- [x] RunPod API client (src/utils/runpod.ts)
+- [x] Pod lifecycle management (create/start/stop/terminate)
+- [x] GPU availability checking
+- [x] Training job submission
+- [x] Real-time training logs
+- [x] Cost estimation
+- [x] 11 RunPod tools
+
 ## Current Phase
 
-### Phase 4: RunPod Integration [IN PROGRESS]
+### Phase 6: Cross-Project Integration [IN PROGRESS]
 
-- [ ] RunPod API client
-- [ ] Pod lifecycle management (create/start/stop/terminate)
-- [ ] Training job submission
-- [ ] Real-time training logs
-- [ ] Model artifact retrieval
-- [ ] Cost tracking
+- [ ] End-to-end training test with real data (coperniq-forge)
+- [ ] Cost tracking and alerts
+- [ ] Checkpoint management
+- [ ] Multi-project template
+- [ ] FieldVault, NetZero integrations
 
-### Phase 5: Advanced Features [PLANNED]
+### Phase 7: Advanced Features [PLANNED]
 
 - [ ] Multi-GPU training support
-- [ ] Checkpoint management
 - [ ] Training visualization
 - [ ] Hyperparameter optimization
 - [ ] Model versioning
+- [ ] A/B testing framework
 
-## RunPod Integration Design
+## Tool Summary (33 total)
 
-### New Tools to Add
+| Category          | Tools | Status |
+| ----------------- | ----- | ------ |
+| Core              | 12    | Done   |
+| Knowledge Capture | 10    | Done   |
+| RunPod            | 11    | Done   |
 
-1. `runpod_create_pod` - Create GPU pod for training
-2. `runpod_list_pods` - List active/available pods
-3. `runpod_start_training` - Submit training job to pod
-4. `runpod_get_training_logs` - Stream training output
-5. `runpod_download_model` - Retrieve trained model
-6. `runpod_terminate_pod` - Clean up resources
-
-### Available Resources
+## Available Resources
 
 - **Pod**: coperniq-ft2 (yopwr0r7v1pf9j)
 - **GPU**: RTX A5000 (24GB VRAM)
@@ -96,4 +111,5 @@ Enable Claude Code users to fine-tune LLMs efficiently through an MCP interface,
 | 2025-11-06 | Python backend for Unsloth | Native Unsloth integration   |
 | 2025-11-07 | Winston for logging        | Production-grade, structured |
 | 2025-11-07 | Jest for testing           | Best TS/JS testing framework |
-| TBD        | RunPod for GPU             | Cost-effective, API-friendly |
+| 2025-12-21 | RunPod for GPU             | Cost-effective, API-friendly |
+| 2025-12-21 | Cross-project infra        | Leverage for all 70 projects |
