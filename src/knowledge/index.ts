@@ -52,3 +52,20 @@ export {
   generateFromDatabase,
   generateSyntheticPairs,
 } from './training-generator.js';
+
+// Dataset builder - types
+export type {
+  DatasetEntry,
+  DataSource,
+  ContentBlock,
+  EntryMetadata,
+  QualityMetrics,
+} from './dataset-builder.js';
+
+// Dataset builder - values
+export {
+  DatasetBuilder,
+  PUBLIC_DATA_SOURCES,
+  TRADE_TEMPLATES,
+  CONTRIBUTION_GUIDE,
+} from './dataset-builder.js';
