@@ -69,3 +69,30 @@ export {
   TRADE_TEMPLATES,
   CONTRIBUTION_GUIDE,
 } from './dataset-builder.js';
+
+// AI Enhancement - types
+export type {
+  QualityReport,
+  EnhancedTrainingPair,
+  DifficultyAssessment,
+  ReviewSchedule,
+} from './ai-enhancer.js';
+
+// AI Enhancement - values
+export {
+  generateExpertQA,
+  evaluateQuality,
+  improveTrainingPair,
+  assessDifficulty,
+  calculateNextReview,
+} from './ai-enhancer.js';
+
+// Hugging Face Export - types
+export type { ExportOptions } from './huggingface-export.js';
+
+// Hugging Face Export - values
+export {
+  generateDatasetCard,
+  exportForHuggingFace,
+  uploadToHuggingFace,
+} from './huggingface-export.js';

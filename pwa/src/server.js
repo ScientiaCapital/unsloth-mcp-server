@@ -507,7 +507,7 @@ conn.close()
   }
 });
 
-// Get stats
+// Get stats (enhanced for dashboard)
 app.get('/api/stats', async (req, res) => {
   try {
     const script = `
@@ -517,25 +517,62 @@ import json
 conn = sqlite3.connect("${DB_PATH}")
 cursor = conn.cursor()
 
+# Total entries
 cursor.execute('SELECT COUNT(*) FROM knowledge_entries')
 total = cursor.fetchone()[0]
 
+# By category
 cursor.execute('SELECT category, COUNT(*) FROM knowledge_entries GROUP BY category')
 by_category = {row[0]: row[1] for row in cursor.fetchall()}
 
+# Training pairs
 cursor.execute('SELECT COUNT(*) FROM training_pairs')
 total_pairs = cursor.fetchone()[0]
 
+# Average quality scores
 cursor.execute('SELECT AVG(quality_score) FROM knowledge_entries')
-avg_quality = cursor.fetchone()[0] or 0
+avg_entry_quality = cursor.fetchone()[0] or 0
+
+cursor.execute('SELECT AVG(quality_score) FROM training_pairs')
+avg_pair_quality = cursor.fetchone()[0] or 0
+
+# Quality distribution
+cursor.execute('''
+    SELECT
+        SUM(CASE WHEN quality_score >= 80 THEN 1 ELSE 0 END) as high,
+        SUM(CASE WHEN quality_score >= 60 AND quality_score < 80 THEN 1 ELSE 0 END) as medium,
+        SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) as low
+    FROM training_pairs
+''')
+quality_dist = cursor.fetchone()
+
+# Recent activity count (last 7 days)
+cursor.execute('''
+    SELECT COUNT(*) FROM knowledge_entries
+    WHERE created_at >= datetime('now', '-7 days')
+''')
+recent_entries = cursor.fetchone()[0]
+
+# By source type
+cursor.execute('SELECT source_type, COUNT(*) FROM knowledge_entries GROUP BY source_type')
+by_source = {row[0]: row[1] for row in cursor.fetchall()}
 
 conn.close()
 
 print(json.dumps({
     "total_entries": total,
+    "total_pairs": total_pairs,
+    "by_category": by_category,
+    "by_source": by_source,
+    "average_quality": round(avg_pair_quality if avg_pair_quality else avg_entry_quality, 1),
+    "quality_distribution": {
+        "high": quality_dist[0] or 0,
+        "medium": quality_dist[1] or 0,
+        "low": quality_dist[2] or 0
+    },
+    "recent_entries": recent_entries,
     "entries_by_category": by_category,
-    "total_training_pairs": total_pairs,
-    "avg_quality_score": round(avg_quality, 2)
+    "avg_quality_score": round(avg_entry_quality, 2)
 }))
 `;
     const result = await runPythonScript(script);
@@ -701,6 +738,11 @@ print(json.dumps(pairs))
 // Serve PWA
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Dashboard
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 // Start server
