@@ -51,6 +51,7 @@ export interface SourceInfo {
 }
 
 export type Category =
+  // Trading & Finance
   | 'candlestick_patterns'
   | 'chart_patterns'
   | 'technical_indicators'
@@ -61,6 +62,32 @@ export type Category =
   | 'fundamental_analysis'
   | 'order_flow'
   | 'volume_analysis'
+  // Sales & Persuasion
+  | 'sales_techniques'
+  | 'negotiation'
+  | 'persuasion'
+  | 'closing'
+  // Business & Entrepreneurship
+  | 'business_strategy'
+  | 'marketing'
+  | 'leadership'
+  | 'management'
+  | 'startups'
+  // Self-Help & Personal Development
+  | 'mindset'
+  | 'habits'
+  | 'productivity'
+  | 'motivation'
+  | 'success_principles'
+  // Wealth & Investing
+  | 'wealth_building'
+  | 'real_estate'
+  | 'passive_income'
+  // Communication & Influence
+  | 'communication'
+  | 'public_speaking'
+  | 'networking'
+  // General
   | 'general';
 
 export interface TrainingPair {
@@ -358,8 +385,324 @@ export const CATEGORY_DEFINITIONS: Record<
     ],
     examples: ['volume climax reversal', 'VWAP bounce', 'accumulation zone'],
   },
+
+  // ==================== SALES & PERSUASION ====================
+  sales_techniques: {
+    description: 'Sales methodologies and closing techniques',
+    keywords: [
+      'prospect',
+      'qualify',
+      'objection',
+      'close',
+      'pitch',
+      'cold call',
+      'follow up',
+      'pipeline',
+      'conversion',
+      'upsell',
+    ],
+    examples: ['handling objections', 'qualifying leads', 'sales pitch structure'],
+  },
+  negotiation: {
+    description: 'Negotiation tactics and deal-making',
+    keywords: [
+      'negotiate',
+      'leverage',
+      'BATNA',
+      'concession',
+      'anchor',
+      'compromise',
+      'win-win',
+      'deadlock',
+      'counter offer',
+    ],
+    examples: ['anchoring technique', 'creating leverage', 'win-win negotiation'],
+  },
+  persuasion: {
+    description: 'Psychology of influence and persuasion',
+    keywords: [
+      'influence',
+      'reciprocity',
+      'scarcity',
+      'authority',
+      'social proof',
+      'liking',
+      'commitment',
+      'consistency',
+      'cialdini',
+    ],
+    examples: ['reciprocity principle', 'social proof in marketing', 'scarcity tactics'],
+  },
+  closing: {
+    description: 'Closing techniques and deal finalization',
+    keywords: [
+      'assumptive close',
+      'trial close',
+      'urgency',
+      'now or never',
+      'summary close',
+      'alternative close',
+      'puppy dog close',
+    ],
+    examples: ['assumptive close technique', 'creating urgency', 'trial closing'],
+  },
+
+  // ==================== BUSINESS & ENTREPRENEURSHIP ====================
+  business_strategy: {
+    description: 'Business strategy and competitive advantage',
+    keywords: [
+      'strategy',
+      'competitive advantage',
+      'moat',
+      'disruption',
+      'scale',
+      'pivot',
+      'business model',
+      'value proposition',
+      'differentiation',
+    ],
+    examples: ['building competitive moat', 'business model innovation', 'strategic pivot'],
+  },
+  marketing: {
+    description: 'Marketing strategies and customer acquisition',
+    keywords: [
+      'marketing',
+      'branding',
+      'positioning',
+      'funnel',
+      'acquisition',
+      'retention',
+      'SEO',
+      'content',
+      'viral',
+      'growth hacking',
+    ],
+    examples: ['marketing funnel optimization', 'brand positioning', 'growth hacking tactics'],
+  },
+  leadership: {
+    description: 'Leadership principles and team management',
+    keywords: [
+      'leader',
+      'vision',
+      'inspire',
+      'delegate',
+      'empower',
+      'culture',
+      'team building',
+      'servant leadership',
+      'executive',
+    ],
+    examples: ['servant leadership', 'building team culture', 'inspiring vision'],
+  },
+  management: {
+    description: 'Management techniques and organizational skills',
+    keywords: [
+      'manage',
+      'organize',
+      'prioritize',
+      'delegate',
+      'KPI',
+      'metrics',
+      'performance',
+      'feedback',
+      'one on one',
+    ],
+    examples: ['effective delegation', 'KPI tracking', 'performance reviews'],
+  },
+  startups: {
+    description: 'Startup building and entrepreneurship',
+    keywords: [
+      'startup',
+      'founder',
+      'MVP',
+      'product market fit',
+      'fundraising',
+      'venture',
+      'bootstrap',
+      'iterate',
+      'pivot',
+      'traction',
+    ],
+    examples: ['finding product market fit', 'MVP development', 'fundraising strategies'],
+  },
+
+  // ==================== SELF-HELP & PERSONAL DEVELOPMENT ====================
+  mindset: {
+    description: 'Mental frameworks and belief systems',
+    keywords: [
+      'mindset',
+      'belief',
+      'growth mindset',
+      'fixed mindset',
+      'abundance',
+      'scarcity',
+      'limiting belief',
+      'reframe',
+      'perspective',
+    ],
+    examples: ['growth vs fixed mindset', 'overcoming limiting beliefs', 'abundance mindset'],
+  },
+  habits: {
+    description: 'Habit formation and behavior change',
+    keywords: [
+      'habit',
+      'routine',
+      'trigger',
+      'cue',
+      'reward',
+      'habit loop',
+      'atomic habits',
+      'keystone habit',
+      'habit stacking',
+    ],
+    examples: ['habit loop mechanics', 'keystone habits', 'habit stacking technique'],
+  },
+  productivity: {
+    description: 'Time management and personal productivity',
+    keywords: [
+      'productivity',
+      'time management',
+      'focus',
+      'deep work',
+      'pomodoro',
+      'batch',
+      'prioritize',
+      'eliminate',
+      '80/20',
+      'pareto',
+    ],
+    examples: ['deep work practice', 'Pomodoro technique', '80/20 principle'],
+  },
+  motivation: {
+    description: 'Motivation and drive',
+    keywords: [
+      'motivation',
+      'drive',
+      'purpose',
+      'why',
+      'passion',
+      'intrinsic',
+      'extrinsic',
+      'goal',
+      'vision',
+      'inspire',
+    ],
+    examples: ['finding your why', 'intrinsic motivation', 'setting compelling goals'],
+  },
+  success_principles: {
+    description: 'Universal principles of success',
+    keywords: [
+      'success',
+      'principle',
+      'law',
+      'secret',
+      'millionaire',
+      'wealthy',
+      'achieve',
+      'excellence',
+      'mastery',
+      'compound',
+    ],
+    examples: ['compound effect', 'laws of success', 'mastery principles'],
+  },
+
+  // ==================== WEALTH & INVESTING ====================
+  wealth_building: {
+    description: 'Long-term wealth accumulation strategies',
+    keywords: [
+      'wealth',
+      'rich',
+      'millionaire',
+      'billionaire',
+      'compound',
+      'invest',
+      'asset',
+      'liability',
+      'net worth',
+      'financial freedom',
+    ],
+    examples: ['assets vs liabilities', 'compound interest', 'building net worth'],
+  },
+  real_estate: {
+    description: 'Real estate investing strategies',
+    keywords: [
+      'real estate',
+      'property',
+      'rental',
+      'cash flow',
+      'appreciation',
+      'leverage',
+      'mortgage',
+      'flip',
+      'landlord',
+      'tenant',
+    ],
+    examples: ['rental property cash flow', 'house flipping', 'real estate leverage'],
+  },
+  passive_income: {
+    description: 'Passive income streams and systems',
+    keywords: [
+      'passive income',
+      'residual',
+      'royalty',
+      'dividend',
+      'automation',
+      'system',
+      'cash flow',
+      'multiple streams',
+    ],
+    examples: ['building passive income', 'dividend investing', 'income automation'],
+  },
+
+  // ==================== COMMUNICATION & INFLUENCE ====================
+  communication: {
+    description: 'Effective communication skills',
+    keywords: [
+      'communicate',
+      'listen',
+      'empathy',
+      'rapport',
+      'body language',
+      'tone',
+      'clarity',
+      'message',
+      'feedback',
+    ],
+    examples: ['active listening', 'building rapport', 'clear communication'],
+  },
+  public_speaking: {
+    description: 'Public speaking and presentation skills',
+    keywords: [
+      'speech',
+      'presentation',
+      'audience',
+      'stage',
+      'storytelling',
+      'delivery',
+      'confidence',
+      'TED',
+      'keynote',
+    ],
+    examples: ['storytelling in speeches', 'confident delivery', 'engaging audiences'],
+  },
+  networking: {
+    description: 'Professional networking and relationship building',
+    keywords: [
+      'network',
+      'connection',
+      'relationship',
+      'referral',
+      'introduction',
+      'value',
+      'follow up',
+      'mastermind',
+    ],
+    examples: ['strategic networking', 'providing value first', 'mastermind groups'],
+  },
+
+  // ==================== GENERAL ====================
   general: {
-    description: 'General trading and market knowledge',
+    description: 'General knowledge and miscellaneous topics',
     keywords: [],
     examples: [],
   },

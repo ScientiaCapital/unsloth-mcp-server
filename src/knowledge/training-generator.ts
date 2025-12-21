@@ -24,6 +24,7 @@ const execPromise = promisify(exec);
 // ============================================================================
 
 export const SYSTEM_PROMPTS = {
+  // Trading & Finance
   trading_expert: `You are an expert trading educator with decades of experience in technical analysis, chart patterns, and market psychology. You explain concepts clearly with practical examples.`,
 
   risk_manager: `You are a professional risk manager specializing in position sizing, stop-loss strategies, and capital preservation. You prioritize protecting capital above all else.`,
@@ -33,6 +34,36 @@ export const SYSTEM_PROMPTS = {
   options_specialist: `You are an options trading specialist who understands Greeks, volatility, and complex options strategies. You explain options concepts in practical terms.`,
 
   trading_coach: `You are a trading coach who helps traders develop discipline, manage emotions, and build consistent trading habits. You focus on psychology and process.`,
+
+  // Sales & Business
+  sales_expert: `You are a world-class sales trainer with experience closing high-ticket deals. You teach proven techniques for prospecting, objection handling, and closing with integrity.`,
+
+  negotiation_expert: `You are a master negotiator who has trained executives and dealmakers. You teach strategic negotiation frameworks and tactics for win-win outcomes.`,
+
+  business_strategist: `You are a business strategist who has advised Fortune 500 companies and startups. You think in terms of competitive advantage, market positioning, and sustainable growth.`,
+
+  marketing_expert: `You are a marketing expert who understands both traditional and digital marketing. You focus on customer acquisition, brand building, and growth strategies.`,
+
+  leadership_coach: `You are an executive leadership coach who has developed leaders at top organizations. You teach authentic leadership, vision-setting, and team empowerment.`,
+
+  // Personal Development
+  success_coach: `You are a peak performance coach who has studied the habits of ultra-successful people. You teach practical principles for achievement, productivity, and personal mastery.`,
+
+  mindset_coach: `You are a mindset and performance coach specializing in belief systems, mental frameworks, and psychological transformation. You help people overcome limiting beliefs.`,
+
+  productivity_expert: `You are a productivity and time management expert who teaches systems for deep work, focus, and getting more done with less effort.`,
+
+  habit_expert: `You are a behavioral psychologist specializing in habit formation and behavior change. You explain the science of habits and practical strategies for lasting change.`,
+
+  // Wealth & Investing
+  wealth_advisor: `You are a wealth strategist who teaches long-term wealth building principles. You focus on financial literacy, asset allocation, and creating multiple income streams.`,
+
+  real_estate_expert: `You are a real estate investing expert with experience in residential, commercial, and multi-family properties. You teach practical strategies for building wealth through real estate.`,
+
+  // Communication
+  communication_coach: `You are a communication expert who teaches effective speaking, listening, and interpersonal skills. You help people become more persuasive and influential communicators.`,
+
+  public_speaking_coach: `You are a professional speaking coach who has trained TEDx speakers and executives. You teach presentation skills, storytelling, and confident delivery.`,
 };
 
 // ============================================================================
@@ -113,10 +144,142 @@ const QUESTION_TEMPLATES: Record<Category, string[]> = {
     'How do I use {topic} to confirm trades?',
     'What is the relationship between {topic} and price?',
   ],
+
+  // Sales & Persuasion
+  sales_techniques: [
+    'What is the best way to handle {topic}?',
+    'How do I improve my {topic} skills?',
+    'What makes {topic} effective in sales?',
+    'How do top salespeople approach {topic}?',
+  ],
+  negotiation: [
+    'How do I use {topic} in negotiation?',
+    'What is the {topic} technique?',
+    'When should I apply {topic}?',
+    'How do I counter {topic}?',
+  ],
+  persuasion: [
+    'How does {topic} influence decisions?',
+    'What is the psychology behind {topic}?',
+    'How can I ethically use {topic}?',
+    'What are examples of {topic} in action?',
+  ],
+  closing: [
+    'How do I execute a {topic}?',
+    'When is {topic} most effective?',
+    'What signals indicate I should use {topic}?',
+    'How do I practice {topic}?',
+  ],
+
+  // Business & Entrepreneurship
+  business_strategy: [
+    'What is {topic} and why does it matter?',
+    'How do successful companies use {topic}?',
+    'How do I develop a {topic} for my business?',
+    'What are the key elements of {topic}?',
+  ],
+  marketing: [
+    'How do I implement {topic} in marketing?',
+    'What makes {topic} effective?',
+    'How do I measure {topic} success?',
+    'What are best practices for {topic}?',
+  ],
+  leadership: [
+    'What makes {topic} important for leaders?',
+    'How do great leaders practice {topic}?',
+    'How can I develop {topic} skills?',
+    'What are the benefits of {topic}?',
+  ],
+  management: [
+    'How do I effectively use {topic}?',
+    'What are best practices for {topic}?',
+    'How does {topic} improve team performance?',
+    'What mistakes should I avoid with {topic}?',
+  ],
+  startups: [
+    'Why is {topic} important for startups?',
+    'How do I achieve {topic}?',
+    'What are signs of {topic}?',
+    'How do successful founders approach {topic}?',
+  ],
+
+  // Self-Help & Personal Development
+  mindset: [
+    'What is {topic} and how does it work?',
+    'How do I develop a {topic}?',
+    'What are the benefits of {topic}?',
+    'How do I shift from my current mindset to {topic}?',
+  ],
+  habits: [
+    'How do I build {topic}?',
+    'What is the science behind {topic}?',
+    'How long does it take to form {topic}?',
+    'What are strategies for maintaining {topic}?',
+  ],
+  productivity: [
+    'How does {topic} improve productivity?',
+    'What is the {topic} method?',
+    'How do I implement {topic} in my routine?',
+    'What are common mistakes with {topic}?',
+  ],
+  motivation: [
+    'How do I find {topic}?',
+    'What drives {topic}?',
+    'How do I maintain {topic} over time?',
+    'What is the difference between {topic} and discipline?',
+  ],
+  success_principles: [
+    'What is {topic} and why does it matter?',
+    'How do successful people apply {topic}?',
+    'How do I implement {topic} in my life?',
+    'What examples demonstrate {topic}?',
+  ],
+
+  // Wealth & Investing
+  wealth_building: [
+    'How does {topic} contribute to wealth?',
+    'What is the role of {topic} in financial success?',
+    'How do I start with {topic}?',
+    'What mistakes should I avoid with {topic}?',
+  ],
+  real_estate: [
+    'How do I evaluate {topic} in real estate?',
+    'What should I know about {topic}?',
+    'How do successful investors approach {topic}?',
+    'What are the risks of {topic}?',
+  ],
+  passive_income: [
+    'How do I create {topic}?',
+    'What are the best sources of {topic}?',
+    'How long does it take to build {topic}?',
+    'What is needed to maintain {topic}?',
+  ],
+
+  // Communication & Influence
+  communication: [
+    'How do I improve my {topic} skills?',
+    'Why is {topic} important?',
+    'What are techniques for better {topic}?',
+    'How do I practice {topic}?',
+  ],
+  public_speaking: [
+    'How do I use {topic} in presentations?',
+    'What makes {topic} effective?',
+    'How do I overcome fear of {topic}?',
+    'What are tips for better {topic}?',
+  ],
+  networking: [
+    'How do I approach {topic}?',
+    'What makes {topic} successful?',
+    'How do I follow up after {topic}?',
+    'What are best practices for {topic}?',
+  ],
+
   general: [
-    'Can you explain this trading concept?',
+    'Can you explain this concept?',
     'What should I know about this topic?',
-    'How does this apply to real trading?',
+    'How does this apply to real life?',
+    'What are the key takeaways?',
   ],
 };
 
