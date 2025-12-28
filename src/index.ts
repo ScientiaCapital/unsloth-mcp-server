@@ -45,7 +45,7 @@ class UnslothServer {
     this.server = new Server(
       {
         name: 'unsloth-server',
-        version: '2.2.0',
+        version: '2.3.0',
       },
       {
         capabilities: {
@@ -71,7 +71,7 @@ class UnslothServer {
 
     const serverConfig = config.get();
     logger.info('Unsloth MCP Server initialized', {
-      version: '2.2.0',
+      version: '2.3.0',
       environment: serverConfig.server.environment,
       cacheEnabled: serverConfig.cache.enabled,
       logLevel: serverConfig.logging.level,
