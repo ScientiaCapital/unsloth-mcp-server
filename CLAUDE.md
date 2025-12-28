@@ -9,7 +9,7 @@ MCP (Model Context Protocol) server for Unsloth - enabling Claude Code to fine-t
 - **Runtime**: Node.js 18+ / TypeScript 5.2
 - **MCP SDK**: @modelcontextprotocol/sdk 1.6.1
 - **Backend**: Python 3.10-3.12 + Unsloth + PyTorch
-- **Testing**: Jest 30 (87 tests)
+- **Testing**: Jest 30 (180 tests)
 - **GPU**: NVIDIA CUDA 11.8+ / RunPod API
 - **Database**: Supabase PostgreSQL (shared with ai-development-cockpit)
 - **OCR**: Tesseract, EasyOCR, Claude Vision
@@ -21,6 +21,8 @@ src/index.ts          # Main MCP server (33 tools)
 src/cli.ts            # CLI interface
 src/utils/
   - runpod.ts         # RunPod API client (pod management, training jobs)
+  - checkpoint.ts     # Training checkpoint management (save/load/resume)
+  - cost-tracker.ts   # GPU cost tracking dashboard with budgets
   - config.ts         # Configuration system
   - cache.ts          # Caching layer
   - logger.ts         # Winston logging
@@ -33,6 +35,10 @@ src/knowledge/        # Knowledge capture pipeline
   - database.ts       # SQLite storage
   - ai-enhancer.ts    # Claude-powered enhancement
   - training-generator.ts # Training pair generation
+src/__tests__/        # Test suite (180 tests)
+  - knowledge.test.ts # Knowledge module tests (57 tests)
+  - checkpoint.test.ts # Checkpoint manager tests
+  - cost-tracker.test.ts # Cost tracker tests
 ```
 
 ## Available Tools (33 total)
@@ -84,7 +90,7 @@ src/knowledge/        # Knowledge capture pipeline
 ```bash
 npm run build    # Build TypeScript
 npm run start    # Run server
-npm run test     # Run 87 tests
+npm run test     # Run 180 tests
 npm run lint     # TypeScript + ESLint
 npm run cli      # Run CLI tool
 npm run bench    # Run benchmarks

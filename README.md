@@ -1,16 +1,58 @@
-# Unsloth MCP Server v2.1
+# Unsloth MCP Server v2.3.0
 
 [![CI](https://github.com/ScientiaCapital/unsloth-mcp-server/workflows/CI/badge.svg)](https://github.com/ScientiaCapital/unsloth-mcp-server/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-180%20passing-brightgreen)](src/__tests__)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a library that makes LLM fine-tuning 2x faster with 80% less memory.
+An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a library that makes LLM fine-tuning 2x faster with 80% less memory. Production-ready with 33 tools, RunPod GPU integration, and comprehensive cost tracking.
+
+## What's New in v2.3.0
+
+### Checkpoint Management
+
+- Save/load/resume training checkpoints with full versioning
+- Auto-cleanup of old checkpoints (configurable retention)
+- Resume command generation for interrupted training sessions
+- Metadata tracking: step, epoch, loss, learning rate, model config
+
+### Cost Tracking Dashboard
+
+- Real-time GPU session cost monitoring
+- Budget management with daily/weekly/monthly limits
+- Configurable alerts at spending thresholds (50%, 75%, 90%, 100%)
+- Per-project and per-job cost attribution
+- CSV export for expense reporting
+
+### Comprehensive Test Suite
+
+- 180 tests covering all major functionality
+- Knowledge module: OCR, AI enhancement, training generation
+- Checkpoint manager: save, load, list, delete, resume
+- Cost tracker: sessions, alerts, budgets, persistence
+
+## What's New in v2.2.0
+
+### Knowledge Base Pipeline
+
+- Multi-engine OCR (Tesseract, EasyOCR, Claude Vision)
+- AI-powered content enhancement
+- Training pair generation (Q&A, instruction, explanation)
+- Export to Alpaca, ShareGPT, ChatML formats
+
+### RunPod Integration
+
+- Full pod lifecycle management (create, start, stop, terminate)
+- Remote training job execution
+- Real-time training logs
+- Cost estimation before creating pods
 
 ## What's New in v2.0
 
 ### New Features
+
 - **SuperBPE Tokenizer Training**: Train state-of-the-art SuperBPE tokenizers for up to 33% token reduction
 - **Model Information Tool**: Get detailed architecture and parameter information
 - **Tokenizer Comparison**: Compare tokenization efficiency between different tokenizers
@@ -19,12 +61,13 @@ An enhanced MCP server for [Unsloth](https://github.com/unslothai/unsloth) - a l
 - **Dataset Preparation**: Prepare and format datasets for fine-tuning
 
 ### Production-Ready Infrastructure
+
 - **Comprehensive Logging**: Winston-based structured logging with multiple transports
 - **Input Validation**: Full validation for all tool inputs with helpful error messages
 - **Security**: Input sanitization, path validation, resource limits, rate limiting
 - **Error Handling**: Smart error detection with contextual suggestions
 - **Performance Metrics**: Track tool usage, success rates, and execution times
-- **Testing**: 43 comprehensive tests with high coverage
+- **Testing**: 180 comprehensive tests with high coverage
 - **Type Safety**: Full TypeScript with strict mode enabled
 
 [See PRODUCTION_GUIDE.md](PRODUCTION_GUIDE.md) for deployment and monitoring details.
@@ -83,11 +126,12 @@ Verify if Unsloth is properly installed on your system.
 **Parameters**: None
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "check_installation",
-  arguments: {}
+  server_name: 'unsloth-server',
+  tool_name: 'check_installation',
+  arguments: {},
 });
 ```
 
@@ -98,11 +142,12 @@ Get a list of all models supported by Unsloth, including Llama, Mistral, Phi, an
 **Parameters**: None
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "list_supported_models",
-  arguments: {}
+  server_name: 'unsloth-server',
+  tool_name: 'list_supported_models',
+  arguments: {},
 });
 ```
 
@@ -111,21 +156,23 @@ const result = await use_mcp_tool({
 Load a pretrained model with Unsloth optimizations for faster inference and fine-tuning.
 
 **Parameters**:
+
 - `model_name` (required): Name of the model to load (e.g., "unsloth/Llama-3.2-1B")
 - `max_seq_length` (optional): Maximum sequence length for the model (default: 2048)
 - `load_in_4bit` (optional): Whether to load the model in 4-bit quantization (default: true)
 - `use_gradient_checkpointing` (optional): Whether to use gradient checkpointing to save memory (default: true)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "load_model",
+  server_name: 'unsloth-server',
+  tool_name: 'load_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
+    model_name: 'unsloth/Llama-3.2-1B',
     max_seq_length: 4096,
-    load_in_4bit: true
-  }
+    load_in_4bit: true,
+  },
 });
 ```
 
@@ -134,6 +181,7 @@ const result = await use_mcp_tool({
 Fine-tune a model with Unsloth optimizations using LoRA/QLoRA techniques.
 
 **Parameters**:
+
 - `model_name` (required): Name of the model to fine-tune
 - `dataset_name` (required): Name of the dataset to use for fine-tuning
 - `output_dir` (required): Directory to save the fine-tuned model
@@ -148,18 +196,19 @@ Fine-tune a model with Unsloth optimizations using LoRA/QLoRA techniques.
 - `load_in_4bit` (optional): Whether to use 4-bit quantization (default: true)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "finetune_model",
+  server_name: 'unsloth-server',
+  tool_name: 'finetune_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
-    dataset_name: "tatsu-lab/alpaca",
-    output_dir: "./fine-tuned-model",
+    model_name: 'unsloth/Llama-3.2-1B',
+    dataset_name: 'tatsu-lab/alpaca',
+    output_dir: './fine-tuned-model',
     max_steps: 100,
     batch_size: 2,
-    learning_rate: 2e-4
-  }
+    learning_rate: 2e-4,
+  },
 });
 ```
 
@@ -168,6 +217,7 @@ const result = await use_mcp_tool({
 Generate text using a fine-tuned Unsloth model.
 
 **Parameters**:
+
 - `model_path` (required): Path to the fine-tuned model
 - `prompt` (required): Prompt for text generation
 - `max_new_tokens` (optional): Maximum number of tokens to generate (default: 256)
@@ -175,16 +225,17 @@ Generate text using a fine-tuned Unsloth model.
 - `top_p` (optional): Top-p for text generation (default: 0.9)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "generate_text",
+  server_name: 'unsloth-server',
+  tool_name: 'generate_text',
   arguments: {
-    model_path: "./fine-tuned-model",
-    prompt: "Write a short story about a robot learning to paint:",
+    model_path: './fine-tuned-model',
+    prompt: 'Write a short story about a robot learning to paint:',
     max_new_tokens: 512,
-    temperature: 0.8
-  }
+    temperature: 0.8,
+  },
 });
 ```
 
@@ -193,22 +244,24 @@ const result = await use_mcp_tool({
 Export a fine-tuned Unsloth model to various formats for deployment.
 
 **Parameters**:
+
 - `model_path` (required): Path to the fine-tuned model
 - `export_format` (required): Format to export to (gguf, ollama, vllm, huggingface)
 - `output_path` (required): Path to save the exported model
 - `quantization_bits` (optional): Bits for quantization (for GGUF export) (default: 4)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "export_model",
+  server_name: 'unsloth-server',
+  tool_name: 'export_model',
   arguments: {
-    model_path: "./fine-tuned-model",
-    export_format: "gguf",
-    output_path: "./exported-model.gguf",
-    quantization_bits: 4
-  }
+    model_path: './fine-tuned-model',
+    export_format: 'gguf',
+    output_path: './exported-model.gguf',
+    quantization_bits: 4,
+  },
 });
 ```
 
@@ -217,25 +270,28 @@ const result = await use_mcp_tool({
 Train a SuperBPE tokenizer for improved efficiency. SuperBPE tokenizers can encode text using up to 33% fewer tokens than standard BPE tokenizers, leading to faster inference and lower costs.
 
 **Parameters**:
+
 - `corpus_path` (required): Path to training corpus or dataset name from Hugging Face
 - `output_path` (required): Path to save the trained tokenizer
 - `vocab_size` (optional): Vocabulary size for the tokenizer (default: 50000)
-- `num_inherit_merges` (optional): Number of merges to inherit from BPE stage (default: vocab_size * 0.8)
+- `num_inherit_merges` (optional): Number of merges to inherit from BPE stage (default: vocab_size \* 0.8)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "train_superbpe_tokenizer",
+  server_name: 'unsloth-server',
+  tool_name: 'train_superbpe_tokenizer',
   arguments: {
-    corpus_path: "wikitext",
-    output_path: "./tokenizers/superbpe_tokenizer.json",
-    vocab_size: 50000
-  }
+    corpus_path: 'wikitext',
+    output_path: './tokenizers/superbpe_tokenizer.json',
+    vocab_size: 50000,
+  },
 });
 ```
 
 **Benefits**:
+
 - 20-33% reduction in token count
 - Faster inference times
 - Lower API costs
@@ -246,20 +302,23 @@ const result = await use_mcp_tool({
 Get detailed information about a model including architecture, parameters, and capabilities.
 
 **Parameters**:
+
 - `model_name` (required): Name or path of the model to inspect
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "get_model_info",
+  server_name: 'unsloth-server',
+  tool_name: 'get_model_info',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B"
-  }
+    model_name: 'unsloth/Llama-3.2-1B',
+  },
 });
 ```
 
 **Returns**:
+
 - Architecture type and details
 - Number of parameters
 - Hidden size and layers
@@ -272,24 +331,27 @@ const result = await use_mcp_tool({
 Compare tokenization efficiency between different tokenizers (e.g., standard BPE vs SuperBPE).
 
 **Parameters**:
+
 - `text` (required): Sample text to tokenize for comparison
 - `tokenizer1_path` (required): Path to first tokenizer
 - `tokenizer2_path` (required): Path to second tokenizer
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "compare_tokenizers",
+  server_name: 'unsloth-server',
+  tool_name: 'compare_tokenizers',
   arguments: {
-    text: "Your sample text here for comparison...",
-    tokenizer1_path: "meta-llama/Llama-3.2-1B",
-    tokenizer2_path: "./tokenizers/superbpe_tokenizer.json"
-  }
+    text: 'Your sample text here for comparison...',
+    tokenizer1_path: 'meta-llama/Llama-3.2-1B',
+    tokenizer2_path: './tokenizers/superbpe_tokenizer.json',
+  },
 });
 ```
 
 **Returns**:
+
 - Token counts for each tokenizer
 - Efficiency gain percentage
 - Winner determination
@@ -299,26 +361,29 @@ const result = await use_mcp_tool({
 Benchmark model inference speed and memory usage with Unsloth optimizations.
 
 **Parameters**:
+
 - `model_name` (required): Name of the model to benchmark
 - `prompt` (required): Sample prompt for benchmarking
 - `num_iterations` (optional): Number of iterations to run (default: 10)
 - `max_new_tokens` (optional): Tokens to generate per iteration (default: 128)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "benchmark_model",
+  server_name: 'unsloth-server',
+  tool_name: 'benchmark_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
-    prompt: "Write a story about AI:",
+    model_name: 'unsloth/Llama-3.2-1B',
+    prompt: 'Write a story about AI:',
     num_iterations: 10,
-    max_new_tokens: 128
-  }
+    max_new_tokens: 128,
+  },
 });
 ```
 
 **Returns**:
+
 - Average/min/max inference times
 - Tokens per second
 - Memory usage statistics
@@ -328,22 +393,25 @@ const result = await use_mcp_tool({
 List popular datasets available for fine-tuning from Hugging Face.
 
 **Parameters**:
+
 - `search_query` (optional): Search query to filter datasets
 - `limit` (optional): Maximum number of datasets to return (default: 20)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "list_datasets",
+  server_name: 'unsloth-server',
+  tool_name: 'list_datasets',
   arguments: {
-    search_query: "instruction",
-    limit: 20
-  }
+    search_query: 'instruction',
+    limit: 20,
+  },
 });
 ```
 
 **Returns**:
+
 - Dataset IDs and authors
 - Download counts and likes
 - Relevant tags
@@ -353,26 +421,29 @@ const result = await use_mcp_tool({
 Prepare and format a dataset for Unsloth fine-tuning.
 
 **Parameters**:
+
 - `dataset_name` (required): Name of the dataset to prepare
 - `output_path` (required): Path to save the prepared dataset
 - `text_field` (optional): Field containing the text data (default: "text")
 - `format` (optional): Output format - json, jsonl, or csv (default: jsonl)
 
 **Example**:
+
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "prepare_dataset",
+  server_name: 'unsloth-server',
+  tool_name: 'prepare_dataset',
   arguments: {
-    dataset_name: "tatsu-lab/alpaca",
-    output_path: "./datasets/alpaca_prepared.jsonl",
-    text_field: "text",
-    format: "jsonl"
-  }
+    dataset_name: 'tatsu-lab/alpaca',
+    output_path: './datasets/alpaca_prepared.jsonl',
+    text_field: 'text',
+    format: 'jsonl',
+  },
 });
 ```
 
 **Returns**:
+
 - Number of examples processed
 - Output file path
 - Format confirmation
@@ -386,35 +457,35 @@ Train and use SuperBPE tokenizers for maximum efficiency:
 ```javascript
 // 1. Prepare your training dataset
 const prepResult = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "prepare_dataset",
+  server_name: 'unsloth-server',
+  tool_name: 'prepare_dataset',
   arguments: {
-    dataset_name: "wikitext",
-    output_path: "./data/training_corpus.jsonl",
-    format: "jsonl"
-  }
+    dataset_name: 'wikitext',
+    output_path: './data/training_corpus.jsonl',
+    format: 'jsonl',
+  },
 });
 
 // 2. Train a SuperBPE tokenizer
 const tokenizer = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "train_superbpe_tokenizer",
+  server_name: 'unsloth-server',
+  tool_name: 'train_superbpe_tokenizer',
   arguments: {
-    corpus_path: "./data/training_corpus.jsonl",
-    output_path: "./tokenizers/superbpe.json",
-    vocab_size: 50000
-  }
+    corpus_path: './data/training_corpus.jsonl',
+    output_path: './tokenizers/superbpe.json',
+    vocab_size: 50000,
+  },
 });
 
 // 3. Compare with standard tokenizer
 const comparison = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "compare_tokenizers",
+  server_name: 'unsloth-server',
+  tool_name: 'compare_tokenizers',
   arguments: {
-    text: "Sample text to compare tokenization efficiency...",
-    tokenizer1_path: "meta-llama/Llama-3.2-1B",
-    tokenizer2_path: "./tokenizers/superbpe.json"
-  }
+    text: 'Sample text to compare tokenization efficiency...',
+    tokenizer1_path: 'meta-llama/Llama-3.2-1B',
+    tokenizer2_path: './tokenizers/superbpe.json',
+  },
 });
 
 // Result: SuperBPE typically shows 20-33% reduction in tokens!
@@ -427,23 +498,23 @@ Get comprehensive model information and performance metrics:
 ```javascript
 // 1. Get detailed model information
 const info = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "get_model_info",
+  server_name: 'unsloth-server',
+  tool_name: 'get_model_info',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B"
-  }
+    model_name: 'unsloth/Llama-3.2-1B',
+  },
 });
 
 // 2. Benchmark the model
 const benchmark = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "benchmark_model",
+  server_name: 'unsloth-server',
+  tool_name: 'benchmark_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
-    prompt: "Write a short story:",
+    model_name: 'unsloth/Llama-3.2-1B',
+    prompt: 'Write a short story:',
     num_iterations: 10,
-    max_new_tokens: 128
-  }
+    max_new_tokens: 128,
+  },
 });
 
 // Compare: tokens/sec, memory usage, inference time
@@ -456,35 +527,35 @@ Find and prepare the perfect dataset for your fine-tuning needs:
 ```javascript
 // 1. Search for relevant datasets
 const datasets = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "list_datasets",
+  server_name: 'unsloth-server',
+  tool_name: 'list_datasets',
   arguments: {
-    search_query: "instruction following",
-    limit: 20
-  }
+    search_query: 'instruction following',
+    limit: 20,
+  },
 });
 
 // 2. Prepare selected dataset
 const prepared = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "prepare_dataset",
+  server_name: 'unsloth-server',
+  tool_name: 'prepare_dataset',
   arguments: {
-    dataset_name: "tatsu-lab/alpaca",
-    output_path: "./datasets/alpaca.jsonl",
-    text_field: "text",
-    format: "jsonl"
-  }
+    dataset_name: 'tatsu-lab/alpaca',
+    output_path: './datasets/alpaca.jsonl',
+    text_field: 'text',
+    format: 'jsonl',
+  },
 });
 
 // 3. Fine-tune with prepared dataset
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "finetune_model",
+  server_name: 'unsloth-server',
+  tool_name: 'finetune_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
-    dataset_name: "./datasets/alpaca.jsonl",
-    output_dir: "./fine-tuned-model"
-  }
+    model_name: 'unsloth/Llama-3.2-1B',
+    dataset_name: './datasets/alpaca.jsonl',
+    output_dir: './fine-tuned-model',
+  },
 });
 ```
 
@@ -494,20 +565,21 @@ You can use custom datasets by formatting them properly and hosting them on Hugg
 
 ```javascript
 const result = await use_mcp_tool({
-  server_name: "unsloth-server",
-  tool_name: "finetune_model",
+  server_name: 'unsloth-server',
+  tool_name: 'finetune_model',
   arguments: {
-    model_name: "unsloth/Llama-3.2-1B",
-    dataset_name: "json",
-    data_files: {"train": "path/to/your/data.json"},
-    output_dir: "./fine-tuned-model"
-  }
+    model_name: 'unsloth/Llama-3.2-1B',
+    dataset_name: 'json',
+    data_files: { train: 'path/to/your/data.json' },
+    output_dir: './fine-tuned-model',
+  },
 });
 ```
 
 ### Memory Optimization
 
 For large models on limited hardware:
+
 - Reduce batch size and increase gradient accumulation steps
 - Use 4-bit quantization
 - Enable gradient checkpointing
@@ -529,11 +601,11 @@ For large models on limited hardware:
 
 ## Performance Benchmarks
 
-| Model | VRAM | Unsloth Speed | VRAM Reduction | Context Length |
-|-------|------|---------------|----------------|----------------|
-| Llama 3.3 (70B) | 80GB | 2x faster | >75% | 13x longer |
-| Llama 3.1 (8B) | 80GB | 2x faster | >70% | 12x longer |
-| Mistral v0.3 (7B) | 80GB | 2.2x faster | 75% less | - |
+| Model             | VRAM | Unsloth Speed | VRAM Reduction | Context Length |
+| ----------------- | ---- | ------------- | -------------- | -------------- |
+| Llama 3.3 (70B)   | 80GB | 2x faster     | >75%           | 13x longer     |
+| Llama 3.1 (8B)    | 80GB | 2x faster     | >70%           | 12x longer     |
+| Mistral v0.3 (7B) | 80GB | 2.2x faster   | 75% less       | -              |
 
 ## Requirements
 
@@ -576,12 +648,14 @@ A: Make sure you're using Node.js 18 or 20. Run `npm install` and `npm run build
 
 **Q: How long does fine-tuning take?**
 A: Depends on hardware and settings:
+
 - RTX 3090: 10-30 minutes (100-500 steps)
 - RTX 4090: 5-15 minutes (100-500 steps)
 - A100: 3-10 minutes (100-500 steps)
 
 **Q: How much does it cost on cloud GPUs?**
 A: Approximately:
+
 - AWS g5.xlarge (A10G): ~$1.50/hour
 - Runpod RTX 4090: ~$1.50/hour
 - Lambda Labs A100: ~$1.10/hour
@@ -598,13 +672,15 @@ A: Models are saved to the `output_dir` you specify in the `finetune_model` call
 
 **Q: Why is my training slower than expected?**
 A: Check:
+
 1. GPU is being used (`nvidia-smi`)
 2. Not using too large `max_seq_length`
 3. CUDA drivers are up to date
 4. No thermal throttling
 
 **Q: How can I improve model quality?**
-A: 
+A:
+
 1. Increase `max_steps` (try 500-1000)
 2. Use higher quality training data
 3. Experiment with `learning_rate` (1e-4 to 5e-4)
@@ -618,6 +694,7 @@ A: Train a SuperBPE tokenizer on your domain-specific corpus. See `examples/02-s
 
 **Q: How do I use the Docker version?**
 A:
+
 ```bash
 # Build the image
 docker-compose build
@@ -650,6 +727,7 @@ A: Check `UNSLOTH_CACHE_ENABLED=true` and ensure the `.cache` directory is writa
 
 **Q: How can I contribute?**
 A: See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. We welcome:
+
 - Bug reports and fixes
 - New features
 - Documentation improvements
@@ -658,6 +736,7 @@ A: See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. We welcome:
 
 **Q: How do I report a bug?**
 A: Open an issue on GitHub with:
+
 1. Clear description of the problem
 2. Steps to reproduce
 3. Expected vs actual behavior
@@ -675,4 +754,3 @@ A: Open an issue on GitHub with:
 - [Unsloth](https://github.com/unslothai/unsloth) - Fast LLM fine-tuning library
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP specification
 - [Claude Desktop](https://claude.ai/) - Claude AI assistant
-
