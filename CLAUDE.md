@@ -2,25 +2,28 @@
 
 ## Overview
 
-MCP (Model Context Protocol) server for Unsloth - enabling Claude Code to fine-tune LLMs 2x faster with 80% less memory. Production-ready v2.3.0 with 33 tools, comprehensive testing, and RunPod GPU integration.
+MCP (Model Context Protocol) server for Unsloth - enabling Claude Code to fine-tune LLMs 2x faster with 80% less memory. Production-ready v2.4.0 with 41 tools, web scraping, model registry, and RunPod GPU integration.
 
 ## Tech Stack
 
 - **Runtime**: Node.js 18+ / TypeScript 5.2
 - **MCP SDK**: @modelcontextprotocol/sdk 1.6.1
 - **Backend**: Python 3.10-3.12 + Unsloth + PyTorch
-- **Testing**: Jest 30 (180 tests)
+- **Testing**: Jest 30 (180+ tests)
 - **GPU**: NVIDIA CUDA 11.8+ / RunPod API
 - **Database**: Supabase PostgreSQL (shared with ai-development-cockpit)
 - **OCR**: Tesseract, EasyOCR, Claude Vision
+- **Web Scraping**: Exa AI + Firecrawl
 
 ## Key Files
 
 ```
-src/index.ts          # Main MCP server (33 tools)
+src/index.ts          # Main MCP server (41 tools)
 src/cli.ts            # CLI interface
 src/utils/
   - runpod.ts         # RunPod API client (pod management, training jobs)
+  - web-scraper.ts    # Exa + Firecrawl web scraping for training data
+  - model-registry.ts # Track trained models and deployments
   - checkpoint.ts     # Training checkpoint management (save/load/resume)
   - cost-tracker.ts   # GPU cost tracking dashboard with budgets
   - config.ts         # Configuration system
@@ -35,13 +38,13 @@ src/knowledge/        # Knowledge capture pipeline
   - database.ts       # SQLite storage
   - ai-enhancer.ts    # Claude-powered enhancement
   - training-generator.ts # Training pair generation
-src/__tests__/        # Test suite (180 tests)
+src/__tests__/        # Test suite (180+ tests)
   - knowledge.test.ts # Knowledge module tests (57 tests)
   - checkpoint.test.ts # Checkpoint manager tests
   - cost-tracker.test.ts # Cost tracker tests
 ```
 
-## Available Tools (33 total)
+## Available Tools (41 total)
 
 ### Core Tools (12)
 
@@ -85,12 +88,49 @@ src/__tests__/        # Test suite (180 tests)
 32. `runpod_get_training_logs` - Get training logs
 33. `runpod_estimate_cost` - Estimate training cost
 
+### Web Scraping Tools (8) - NEW in v2.4.0
+
+34. `web_search` - Semantic web search via Exa AI
+35. `web_scrape` - Scrape single URL to LLM-ready markdown
+36. `web_crawl` - Crawl entire website (async job)
+37. `web_crawl_status` - Check crawl job progress
+38. `web_map_urls` - Discover all URLs on a site
+39. `web_research` - Deep research with citations
+40. `web_find_similar` - Find pages similar to a URL
+41. `web_gather_training_data` - Search → scrape → knowledge DB pipeline
+
+## Data Pipeline
+
+```
+Web Scraping (Exa/Firecrawl)
+         ↓
+    web_gather_training_data
+         ↓
+Knowledge Pipeline
+    - Stored in knowledge DB
+    - AI enhancement (Claude)
+    - Quality review
+         ↓
+Training Data Generation
+    - knowledge_generate_pairs
+    - knowledge_export_dataset
+         ↓
+Fine-Tuning (Unsloth + RunPod)
+    - Checkpoint management
+    - Cost tracking
+         ↓
+Model Registry
+    - Track all trained models
+    - Deployment status
+    - Performance metrics
+```
+
 ## Development Commands
 
 ```bash
 npm run build    # Build TypeScript
 npm run start    # Run server
-npm run test     # Run 180 tests
+npm run test     # Run 180+ tests
 npm run lint     # TypeScript + ESLint
 npm run cli      # Run CLI tool
 npm run bench    # Run benchmarks
@@ -103,6 +143,10 @@ npm run bench    # Run benchmarks
 RUNPOD_API_KEY=rpa_XXX
 RUNPOD_API_ENDPOINT=https://api.runpod.io/v2
 RUNPOD_POD_ID=your_pod_id
+
+# Web Scraping (optional - configure one or both)
+EXA_API_KEY=exa_XXX          # For semantic search
+FIRECRAWL_API_KEY=fc_XXX     # For site crawling
 
 # Supabase (shared with ai-development-cockpit)
 SUPABASE_URL=https://xucngysrzjtwqzgcutqf.supabase.co
