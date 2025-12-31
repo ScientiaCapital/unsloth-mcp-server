@@ -32,6 +32,7 @@ import {
   CATEGORY_DEFINITIONS,
 } from './knowledge/index.js';
 import { getRunPodClient, RunPodClient } from './utils/runpod.js';
+import { createWebScraper, WebScraper } from './utils/web-scraper.js';
 
 const execPromise = promisify(exec);
 
@@ -45,7 +46,7 @@ class UnslothServer {
     this.server = new Server(
       {
         name: 'unsloth-server',
-        version: '2.2.0',
+        version: '2.4.0',
       },
       {
         capabilities: {
@@ -71,7 +72,7 @@ class UnslothServer {
 
     const serverConfig = config.get();
     logger.info('Unsloth MCP Server initialized', {
-      version: '2.2.0',
+      version: '2.4.0',
       environment: serverConfig.server.environment,
       cacheEnabled: serverConfig.cache.enabled,
       logLevel: serverConfig.logging.level,
@@ -880,6 +881,224 @@ class UnslothServer {
               },
             },
             required: ['dataset_tokens', 'base_model'],
+          },
+        },
+        // Web Scraping Tools
+        {
+          name: 'web_search',
+          description:
+            'Search the web using Exa AI semantic search. Returns relevant pages with content for training data gathering.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Search query (semantic, not just keywords)',
+              },
+              num_results: {
+                type: 'number',
+                description: 'Number of results to return (default: 10)',
+              },
+              include_domains: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Only include results from these domains',
+              },
+              exclude_domains: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Exclude results from these domains',
+              },
+              category: {
+                type: 'string',
+                description:
+                  'Filter by category: company, research, news, github, tweet, paper, pdf, etc.',
+              },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'web_scrape',
+          description:
+            'Scrape a single URL and convert to LLM-ready markdown using Firecrawl. Great for extracting training data from specific pages.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL to scrape',
+              },
+              only_main_content: {
+                type: 'boolean',
+                description: 'Extract only main content, removing nav/footer (default: true)',
+              },
+              include_tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Only include these HTML tags',
+              },
+              exclude_tags: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Exclude these HTML tags',
+              },
+            },
+            required: ['url'],
+          },
+        },
+        {
+          name: 'web_crawl',
+          description:
+            'Crawl an entire website and convert all pages to LLM-ready markdown. Returns a job ID for tracking.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'Starting URL to crawl',
+              },
+              max_pages: {
+                type: 'number',
+                description: 'Maximum pages to crawl (default: 50)',
+              },
+              max_depth: {
+                type: 'number',
+                description: 'Maximum link depth to follow (default: 2)',
+              },
+              include_paths: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Only crawl URLs matching these patterns',
+              },
+              exclude_paths: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Skip URLs matching these patterns',
+              },
+            },
+            required: ['url'],
+          },
+        },
+        {
+          name: 'web_crawl_status',
+          description: 'Check the status of a crawl job and retrieve results when complete.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              job_id: {
+                type: 'string',
+                description: 'Crawl job ID returned from web_crawl',
+              },
+            },
+            required: ['job_id'],
+          },
+        },
+        {
+          name: 'web_map_urls',
+          description:
+            'Discover all URLs on a website without scraping content. Useful for planning what to crawl.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'Website URL to map',
+              },
+              search: {
+                type: 'string',
+                description: 'Filter URLs containing this text',
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum URLs to return (default: 100)',
+              },
+              include_subdomains: {
+                type: 'boolean',
+                description: 'Include subdomains (default: false)',
+              },
+            },
+            required: ['url'],
+          },
+        },
+        {
+          name: 'web_research',
+          description:
+            'Perform deep research on a topic using Exa. Returns a synthesized summary with citations - perfect for generating training data.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              topic: {
+                type: 'string',
+                description: 'Research topic or question',
+              },
+              max_sources: {
+                type: 'number',
+                description: 'Maximum sources to analyze (default: 20)',
+              },
+            },
+            required: ['topic'],
+          },
+        },
+        {
+          name: 'web_find_similar',
+          description:
+            'Find pages similar to a given URL. Great for expanding training data from good examples.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL to find similar pages for',
+              },
+              num_results: {
+                type: 'number',
+                description: 'Number of similar pages to find (default: 10)',
+              },
+              include_domains: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Only include results from these domains',
+              },
+            },
+            required: ['url'],
+          },
+        },
+        {
+          name: 'web_gather_training_data',
+          description:
+            'Gather training data from web search results. Combines search + content extraction + filtering for quality.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Search query for finding relevant content',
+              },
+              num_results: {
+                type: 'number',
+                description: 'Number of pages to gather (default: 20)',
+              },
+              min_word_count: {
+                type: 'number',
+                description: 'Minimum words per document (default: 100)',
+              },
+              domains: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Limit to these domains',
+              },
+              save_to_file: {
+                type: 'boolean',
+                description: 'Save results to file (default: true)',
+              },
+              output_format: {
+                type: 'string',
+                enum: ['jsonl', 'json', 'markdown'],
+                description: 'Output format (default: jsonl)',
+              },
+            },
+            required: ['query'],
           },
         },
       ],
@@ -2703,6 +2922,363 @@ except Exception as e:
               );
             } catch (error: any) {
               throw new Error(`Error estimating cost: ${error.message}`);
+            }
+          }
+
+          // ================================================================
+          // Web Scraping Tools
+          // ================================================================
+
+          case 'web_search': {
+            const { query, num_results, include_domains, exclude_domains, category } = args as {
+              query: string;
+              num_results?: number;
+              include_domains?: string[];
+              exclude_domains?: string[];
+              category?: string;
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const results = await scraper.exaSearch({
+                query,
+                numResults: num_results || 10,
+                includeDomains: include_domains,
+                excludeDomains: exclude_domains,
+                category,
+                includeText: true,
+                includeHighlights: true,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    query,
+                    resultCount: results.length,
+                    results: results.map((r) => ({
+                      title: r.title,
+                      url: r.url,
+                      score: r.score,
+                      publishedDate: r.publishedDate,
+                      textPreview:
+                        r.text?.substring(0, 500) + (r.text && r.text.length > 500 ? '...' : ''),
+                      highlights: r.highlights,
+                    })),
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Web search failed: ${error.message}`);
+            }
+          }
+
+          case 'web_scrape': {
+            const { url, only_main_content, include_tags, exclude_tags } = args as {
+              url: string;
+              only_main_content?: boolean;
+              include_tags?: string[];
+              exclude_tags?: string[];
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const result = await scraper.firecrawlScrape({
+                url,
+                onlyMainContent: only_main_content ?? true,
+                includeTags: include_tags,
+                excludeTags: exclude_tags,
+              });
+
+              const wordCount = result.markdown?.split(/\s+/).length || 0;
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    url: result.url,
+                    title: result.title,
+                    wordCount,
+                    markdown: result.markdown,
+                    links: result.links?.slice(0, 20),
+                    metadata: result.metadata,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Web scrape failed: ${error.message}`);
+            }
+          }
+
+          case 'web_crawl': {
+            const { url, max_pages, max_depth, include_paths, exclude_paths } = args as {
+              url: string;
+              max_pages?: number;
+              max_depth?: number;
+              include_paths?: string[];
+              exclude_paths?: string[];
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const job = await scraper.firecrawlCrawl({
+                url,
+                maxPages: max_pages || 50,
+                maxDepth: max_depth || 2,
+                includePaths: include_paths,
+                excludePaths: exclude_paths,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    jobId: job.id,
+                    status: job.status,
+                    url: job.url,
+                    message: `Crawl started. Use web_crawl_status with job_id "${job.id}" to check progress.`,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Web crawl failed: ${error.message}`);
+            }
+          }
+
+          case 'web_crawl_status': {
+            const { job_id } = args as { job_id: string };
+
+            try {
+              const scraper = createWebScraper();
+              const job = await scraper.firecrawlCrawlStatus(job_id);
+
+              const response: Record<string, unknown> = {
+                success: true,
+                jobId: job.id,
+                status: job.status,
+                pagesScraped: job.pagesScraped,
+                totalPages: job.totalPages,
+              };
+
+              if (job.status === 'completed' && job.results) {
+                response.resultCount = job.results.length;
+                response.totalWords = job.results.reduce(
+                  (sum, r) => sum + (r.markdown?.split(/\s+/).length || 0),
+                  0
+                );
+                response.pages = job.results.map((r) => ({
+                  url: r.url,
+                  title: r.title,
+                  wordCount: r.markdown?.split(/\s+/).length || 0,
+                }));
+              }
+
+              return this.createSuccessResponse(name, startTime, JSON.stringify(response, null, 2));
+            } catch (error: any) {
+              throw new Error(`Failed to get crawl status: ${error.message}`);
+            }
+          }
+
+          case 'web_map_urls': {
+            const { url, search, limit, include_subdomains } = args as {
+              url: string;
+              search?: string;
+              limit?: number;
+              include_subdomains?: boolean;
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const urls = await scraper.firecrawlMap({
+                url,
+                search,
+                limit: limit || 100,
+                includeSubdomains: include_subdomains || false,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    baseUrl: url,
+                    urlCount: urls.length,
+                    urls: urls.slice(0, limit || 100),
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`URL mapping failed: ${error.message}`);
+            }
+          }
+
+          case 'web_research': {
+            const { topic, max_sources } = args as {
+              topic: string;
+              max_sources?: number;
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const research = await scraper.exaResearch({
+                query: topic,
+                maxResults: max_sources || 20,
+                outputFormat: 'markdown',
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    topic,
+                    summary: research.summary,
+                    sourceCount: research.sources.length,
+                    sources: research.sources.map((s) => ({
+                      title: s.title,
+                      url: s.url,
+                      score: s.score,
+                    })),
+                    citations: research.citations,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Research failed: ${error.message}`);
+            }
+          }
+
+          case 'web_find_similar': {
+            const { url, num_results, include_domains } = args as {
+              url: string;
+              num_results?: number;
+              include_domains?: string[];
+            };
+
+            try {
+              const scraper = createWebScraper();
+              const results = await scraper.exaFindSimilar(url, {
+                numResults: num_results || 10,
+                includeDomains: include_domains,
+              });
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    sourceUrl: url,
+                    similarCount: results.length,
+                    similar: results.map((r) => ({
+                      title: r.title,
+                      url: r.url,
+                      score: r.score,
+                      textPreview: r.text?.substring(0, 300),
+                    })),
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Find similar failed: ${error.message}`);
+            }
+          }
+
+          case 'web_gather_training_data': {
+            const { query, num_results, min_word_count, domains, save_to_file, output_format } =
+              args as {
+                query: string;
+                num_results?: number;
+                min_word_count?: number;
+                domains?: string[];
+                save_to_file?: boolean;
+                output_format?: 'jsonl' | 'json' | 'markdown';
+              };
+
+            try {
+              const scraper = createWebScraper();
+              const data = await scraper.gatherFromSearch(query, {
+                numResults: num_results || 20,
+                domains,
+                minWordCount: min_word_count || 100,
+              });
+
+              const stats = scraper.getStats(data);
+              let filePath: string | undefined;
+
+              if (save_to_file !== false) {
+                filePath = await scraper.saveTrainingData(data, {
+                  format: output_format || 'jsonl',
+                });
+              }
+
+              // Also save to knowledge database for pipeline integration
+              for (const item of data) {
+                try {
+                  await knowledgeDb.addEntry({
+                    source: {
+                      type: 'article',
+                      image_path: item.metadata.url,
+                      capture_date: item.metadata.scrapedAt.toISOString(),
+                      book_title: item.metadata.title,
+                    },
+                    raw_text: item.content,
+                    cleaned_text: item.content,
+                    category: 'reference' as Category,
+                    topics: [],
+                    tags: ['web_scrape', item.metadata.provider],
+                    quality_score: 80,
+                    ocr_confidence: 100, // Not OCR, direct text
+                    manually_reviewed: false,
+                  });
+                } catch {
+                  // Ignore duplicate entries
+                }
+              }
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    query,
+                    stats,
+                    savedToFile: filePath,
+                    savedToKnowledgeDb: data.length,
+                    message: `Gathered ${data.length} documents (${stats.totalWords} words). Ready for training pair generation.`,
+                    nextSteps: [
+                      'Use knowledge_generate_pairs to create training pairs',
+                      'Use knowledge_export_dataset to export in Alpaca/ShareGPT format',
+                      'Use finetune_model to train on the generated data',
+                    ],
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Gather training data failed: ${error.message}`);
             }
           }
 
