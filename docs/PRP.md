@@ -11,7 +11,19 @@
 
 ## Executive Summary
 
-Transform the Unsloth MCP Server from an open-source tool into a commercial Fine-Tuning-as-a-Service (FTaaS) platform that competes with Together AI, Predibase, and H2O.ai while leveraging unique differentiators: integrated knowledge capture pipeline, MCP/Claude Code integration, and comprehensive cost management.
+Transform the Unsloth MCP Server into **the premier fine-tuning service for Chinese open-source LLMs** (DeepSeek, Qwen, Yi, GLM, Baichuan). We compete with Together AI, Predibase, and H2O.ai by combining:
+
+1. **Chinese Model Expertise** - Top 20 Chinese LLMs with optimized recipes
+2. **2x Speed Advantage** - Unsloth's training optimizations
+3. **Knowledge Capture Pipeline** - OCR → Training data (especially Chinese/multilingual)
+4. **Cost Control** - Real-time budgets and alerts
+
+**Why Chinese Models?**
+
+- DeepSeek holds **32%** of enterprise AI market share (ahead of OpenAI)
+- Qwen is the **#1 downloaded** open model globally
+- Chinese LLMs cost **30-60x less** to fine-tune than GPT-4
+- No competitor specializes in this rapidly growing segment
 
 ---
 
@@ -19,27 +31,36 @@ Transform the Unsloth MCP Server from an open-source tool into a commercial Fine
 
 ### 1.1 Target Market
 
-| Segment                    | Size                | Pain Points                        | Willingness to Pay |
-| -------------------------- | ------------------- | ---------------------------------- | ------------------ |
-| **AI Startups**            | 10,000+ companies   | GPU costs, complexity              | $100-500/mo        |
-| **Enterprise ML Teams**    | 5,000+ teams        | Security, compliance, cost control | $2,000-10,000/mo   |
-| **Independent Developers** | 500,000+ devs       | Cost, learning curve               | $0-50/mo           |
-| **Research Labs**          | 2,000+ institutions | Reproducibility, collaboration     | $500-2,000/mo      |
+| Segment                    | Size                | Pain Points                            | Willingness to Pay |
+| -------------------------- | ------------------- | -------------------------------------- | ------------------ |
+| **AI Startups**            | 10,000+ companies   | GPT-4 costs, need Chinese language     | $100-500/mo        |
+| **Enterprise ML Teams**    | 5,000+ teams        | Chinese model expertise, cost control  | $2,000-10,000/mo   |
+| **Chinese Tech Companies** | 50,000+ companies   | Local model optimization, compliance   | $500-5,000/mo      |
+| **Research Labs**          | 2,000+ institutions | DeepSeek/Qwen experimentation, budgets | $500-2,000/mo      |
 
 ### 1.2 Competitive Landscape
 
-| Competitor      | Strengths                             | Weaknesses                            | Our Advantage                        |
-| --------------- | ------------------------------------- | ------------------------------------- | ------------------------------------ |
-| **Together AI** | Large model selection, no minimums    | No knowledge pipeline, no cost alerts | Knowledge capture, budget management |
-| **Predibase**   | LoRAX multi-adapter serving           | Complex pricing, enterprise focus     | Simpler UX, MCP integration          |
-| **H2O.ai**      | Enterprise security, Dell partnership | No self-serve, expensive              | Self-serve + enterprise options      |
+| Competitor      | Strengths                             | Weaknesses                            | Our Advantage                             |
+| --------------- | ------------------------------------- | ------------------------------------- | ----------------------------------------- |
+| **Together AI** | Large model selection, no minimums    | No Chinese expertise, no cost alerts  | **Top 20 Chinese models**, budget mgmt    |
+| **Predibase**   | LoRAX multi-adapter serving           | Complex pricing, enterprise focus     | **Chinese OCR→Training**, simpler UX      |
+| **H2O.ai**      | Enterprise security, Dell partnership | No self-serve, expensive              | **DeepSeek/Qwen specialists**, self-serve |
+| **OpenAI**      | GPT-4 fine-tuning                     | No open models, expensive, no Chinese | **30-60x cheaper**, open-source           |
 
 ### 1.3 Market Opportunity
 
-- LLM fine-tuning market: $2.1B in 2025, growing 45% YoY
-- 78% of enterprises plan to fine-tune models in 2025
-- Average spend: $15,000/year for mid-market, $150,000/year for enterprise
-- Gap: No competitor offers integrated knowledge capture → training pipeline
+**Chinese LLM Market (2025):**
+
+- Enterprise LLM market: **$6.5-8.8B** (2025), **$49-71B** by 2034
+- Domain-specific LLMs: **38% CAGR** (fastest growing segment)
+- DeepSeek market share: **32%** (ahead of OpenAI at 20%)
+- Qwen: **#1 downloaded** open model globally
+
+**Gap in Market:**
+
+- No competitor specializes in Chinese model fine-tuning
+- No Chinese OCR → Training data pipeline exists
+- DeepSeek/Qwen expertise is fragmented across communities
 
 ---
 
@@ -47,41 +68,53 @@ Transform the Unsloth MCP Server from an open-source tool into a commercial Fine
 
 ### 2.1 Vision Statement
 
-> "The fastest path from your data to a production-ready fine-tuned model"
+> "The experts in Chinese LLM fine-tuning — DeepSeek, Qwen, Yi, GLM, Baichuan"
 
 ### 2.2 Mission
 
-Enable any organization to create domain-specific AI models by providing:
+Enable any organization to fine-tune Chinese open-source LLMs by providing:
 
-1. **Speed**: 2x faster fine-tuning via Unsloth optimizations
-2. **Simplicity**: One-click from data to deployed model
-3. **Control**: Full cost visibility and budget management
-4. **Integration**: Native Claude Code / MCP workflow
+1. **Expertise**: Top 20 Chinese models with optimized recipes
+2. **Speed**: 2x faster fine-tuning via Unsloth optimizations
+3. **Cost**: 30-60x cheaper than GPT-4, with budget controls
+4. **Pipeline**: Chinese OCR → Training data → Fine-tuned model
 
 ### 2.3 Product Pillars
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    UNSLOTH CLOUD                            │
+│              CHINESE LLM FINE-TUNING CLOUD                  │
 ├─────────────────┬─────────────────┬─────────────────────────┤
-│  KNOWLEDGE      │  FINE-TUNING    │  DEPLOYMENT             │
-│  CAPTURE        │  ENGINE         │  & SERVING              │
+│  TOP 20 MODELS  │  KNOWLEDGE      │  DEPLOYMENT             │
+│  (Specialized)  │  CAPTURE        │  & SERVING              │
 ├─────────────────┼─────────────────┼─────────────────────────┤
-│ • OCR Pipeline  │ • Unsloth Core  │ • GGUF Export           │
-│ • AI Enhancement│ • LoRA/QLoRA    │ • Ollama Push           │
-│ • Training Gen  │ • Checkpoints   │ • HuggingFace Hub       │
-│ • Quality Review│ • Cost Tracking │ • API Endpoints         │
+│ • DeepSeek-R1   │ • Chinese OCR   │ • GGUF Export           │
+│ • Qwen3 Family  │ • Multilingual  │ • Ollama Push           │
+│ • Yi-1.5        │ • AI Enhancement│ • vLLM Serve            │
+│ • GLM-4.5       │ • Training Gen  │ • HuggingFace Hub       │
+│ • Baichuan-4    │ • Quality Review│ • API Endpoints         │
 └─────────────────┴─────────────────┴─────────────────────────┘
                             │
               ┌─────────────┴─────────────┐
-              │      INFRASTRUCTURE       │
+              │    UNSLOTH CORE ENGINE    │
               ├───────────────────────────┤
-              │ • RunPod GPU Orchestration│
-              │ • Multi-tenant Isolation  │
-              │ • Usage Metering          │
-              │ • Audit Logging           │
+              │ • 2x Faster Training      │
+              │ • 80% Less VRAM           │
+              │ • LoRA/QLoRA Optimized    │
+              │ • Checkpoint Management   │
+              │ • Real-time Cost Tracking │
               └───────────────────────────┘
 ```
+
+### 2.4 Supported Chinese Models (Top 20)
+
+| Tier            | Models                                                       | Use Cases          |
+| --------------- | ------------------------------------------------------------ | ------------------ |
+| **Flagship**    | DeepSeek-R1, DeepSeek-V3.1, Qwen3-72B, Kimi K2, GLM-4.5      | General, Reasoning |
+| **Specialized** | DeepSeek-Coder-V2, Qwen3-Coder, DeepSeek-OCR, Qwen2.5-VL     | Coding, Vision     |
+| **Efficient**   | Yi-1.5-34B, Baichuan-4, DeepSeek-R1-Distill series, Qwen3-4B | Edge, Domain       |
+
+See **[docs/CHINESE-MODELS.md](./CHINESE-MODELS.md)** for full specifications.
 
 ---
 
@@ -245,19 +278,30 @@ Week 13-16: Growth + Optimization
 
 ## Appendix A: Competitive Feature Matrix
 
-| Feature                    | Us      | Together | Predibase | H2O |
-| -------------------------- | ------- | -------- | --------- | --- |
-| LoRA/QLoRA                 | ✅      | ✅       | ✅        | ✅  |
-| Full Fine-tuning           | ✅      | ✅       | ✅        | ✅  |
-| Knowledge Capture Pipeline | ✅      | ❌       | ❌        | ❌  |
-| OCR → Training Data        | ✅      | ❌       | ❌        | ❌  |
-| MCP/Claude Integration     | ✅      | ❌       | ❌        | ❌  |
-| Cost Tracking Dashboard    | ✅      | ❌       | Partial   | ❌  |
-| Budget Alerts              | ✅      | ❌       | ❌        | ❌  |
-| Checkpoint Resume          | ✅      | ❌       | ❌        | ❌  |
-| Free Tier                  | ✅      | ✅       | ✅        | ❌  |
-| On-Premise Option          | Planned | ❌       | ✅        | ✅  |
-| Multi-Adapter Serving      | Planned | ❌       | ✅        | ❌  |
+| Feature                     | Us               | Together | Predibase | H2O | OpenAI |
+| --------------------------- | ---------------- | -------- | --------- | --- | ------ |
+| **Chinese Model Expertise** | ✅ **20 models** | Partial  | Partial   | ❌  | ❌     |
+| DeepSeek-R1 Support         | ✅               | ✅       | ❌        | ❌  | ❌     |
+| Qwen3 Full Family           | ✅               | ✅       | ✅        | ❌  | ❌     |
+| Yi/GLM/Baichuan             | ✅               | Partial  | Partial   | ❌  | ❌     |
+| Chinese OCR → Training      | ✅               | ❌       | ❌        | ❌  | ❌     |
+| 2x Faster (Unsloth)         | ✅               | ❌       | ❌        | ❌  | ❌     |
+| 80% Less VRAM               | ✅               | ❌       | ❌        | ❌  | ❌     |
+| Knowledge Capture Pipeline  | ✅               | ❌       | ❌        | ❌  | ❌     |
+| MCP/Claude Integration      | ✅               | ❌       | ❌        | ❌  | ❌     |
+| Cost Tracking Dashboard     | ✅               | ❌       | Partial   | ❌  | ❌     |
+| Budget Alerts               | ✅               | ❌       | ❌        | ❌  | ❌     |
+| Checkpoint Resume           | ✅               | ❌       | ❌        | ❌  | ❌     |
+| Free Tier                   | ✅               | ✅       | ✅        | ❌  | ❌     |
+
+### Cost Comparison (Fine-tuning 10K samples)
+
+| Platform    | Model                   | Est. Cost | Time  |
+| ----------- | ----------------------- | --------- | ----- |
+| **Us**      | DeepSeek-R1-Distill-32B | **$40**   | 2 hrs |
+| Together AI | DeepSeek-R1-Distill-32B | $80       | 4 hrs |
+| OpenAI      | GPT-4o                  | $250      | 3 hrs |
+| Predibase   | Llama-3-8B              | $60       | 3 hrs |
 
 ---
 

@@ -2,7 +2,16 @@
 
 ## Overview
 
+**The premier fine-tuning service for Chinese open-source LLMs** (DeepSeek, Qwen, Yi, GLM, Baichuan).
+
 MCP (Model Context Protocol) server for Unsloth - enabling Claude Code to fine-tune LLMs 2x faster with 80% less memory. Production-ready v2.4.0 with 41 tools, web scraping, model registry, and RunPod GPU integration.
+
+### Value Proposition
+
+- **Top 20 Chinese Models**: DeepSeek-R1, Qwen3, Yi-1.5, GLM-4.5, Baichuan-4
+- **2x Faster Training**: Unsloth optimizations
+- **30-60x Cheaper**: vs GPT-4 fine-tuning
+- **Chinese OCR→Training**: Full knowledge capture pipeline
 
 ## Tech Stack
 
