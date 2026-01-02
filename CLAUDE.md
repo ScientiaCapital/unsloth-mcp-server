@@ -119,6 +119,42 @@ Check ~/.claude/skills/ for available skills:
 - `langgraph-agents-skill` - Multi-agent systems
 - `supabase-sql-skill` - SQL migrations
 
+## Data-Forge Integration
+
+**This project works in tandem with `data-forge` (~/Desktop/tk_projects/data-forge)**
+
+| Project                | Role                                         |
+| ---------------------- | -------------------------------------------- |
+| **data-forge**         | Finds, processes, and prepares training data |
+| **unsloth-mcp-server** | Fine-tunes models using that data            |
+
+### Data Pipeline Flow
+
+```
+data-forge (data acquisition)           unsloth-mcp-server (fine-tuning)
+├── Gong transcripts → ChatML      →   training-data/grpo_prompts.json
+├── Sales books (Chris Voss, etc.) →   Reward function keywords
+├── Coperniq docs (notion, miro)   →   Domain knowledge signals
+└── Continuous updates             →   Iterative training improvement
+```
+
+### Available Training Data (from data-forge)
+
+- **Gong transcripts**: 169 ChatML examples (8 calls, Abdullah's demos)
+- **Never Split the Difference**: 101 samples, 89K words
+- **The Challenger Sale**: 72 samples, 8.8K words
+- **Blue Ocean Strategy**: ~100 samples
+- **Jobs to be Done**: ~80 samples
+- **Coperniq sales docs**: 430KB domain knowledge
+
+### Workflow
+
+1. **data-forge** extracts and processes new data sources
+2. Update `training-data/grpo_prompts.json` with real scenarios
+3. Enhance reward function keywords based on patterns
+4. Run GRPO training via `train_grpo.py`
+5. Iterate with Ralph Wiggum loop
+
 ## Cross-Project Training
 
 Shared infrastructure for all 70 TK projects:

@@ -18,3 +18,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .npmrc
+
+# Large model files (use HuggingFace Hub or local storage)
+models/*.gguf
+models/*.safetensors
+models/blobs/
+models/manifests/
+*.bin
+*.gguf
+*.safetensors
+!adapter_config.json
+!tokenizer_config.json
