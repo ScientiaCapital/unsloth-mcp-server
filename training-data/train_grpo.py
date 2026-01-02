@@ -129,46 +129,72 @@ QUESTION_PATTERNS = [
 ]
 
 # =============================================================================
-# Sales Book Keywords - From data-forge training corpus
+# Sales Book Keywords - CHALLENGER SALE PRIORITIZED (60%+)
 # =============================================================================
 
-# Never Split the Difference (Chris Voss) - FBI Negotiation
-CHRIS_VOSS_KEYWORDS = [
-    "mirroring", "labeling", "tactical empathy", "calibrated question",
-    "accusation audit", "late-night fm dj", "that's right", "how am i supposed",
-    "active listening", "open-ended", "counterpart", "rapport", "leverage",
-    "black swan", "emotional intelligence", "system 1", "system 2"
-]
-
-# The Challenger Sale - Commercial Teaching
+# The Challenger Sale - Commercial Teaching (PRIMARY METHODOLOGY - 60%+ weight)
+# Three pillars: TEACH, TAILOR, TAKE CONTROL
 CHALLENGER_KEYWORDS = [
+    # Core methodology
     "challenger", "teaching", "tailoring", "taking control", "commercial insight",
     "constructive tension", "reframe", "unique perspective", "thought leader",
+
+    # Teaching pillar - lead with insights
+    "teach", "insight", "educate", "perspective", "show you", "consider this",
+    "what if", "have you thought about", "most companies don't realize",
+    "the data shows", "research indicates", "industry trend",
+
+    # Tailoring pillar - adapt to stakeholders
+    "tailor", "customize", "specific to your", "in your situation",
+    "for your team", "your industry", "your competitors", "your market",
+
+    # Taking control pillar - assertive guidance
+    "take control", "guide", "lead", "direct", "recommend", "should",
+    "the best approach", "here's what works", "let me suggest",
+    "push back", "challenge", "provoke", "assert",
+
+    # Commercial teaching outcomes
     "customer insight", "value driver", "solution selling", "consultative",
-    "differentiate", "provoke", "push back"
+    "differentiate", "competitive advantage", "unique value"
+]
+
+# Challenger Sale - Key Phrases (exact matches get bonus)
+CHALLENGER_PHRASES = [
+    "let me teach you something",
+    "what most companies miss",
+    "here's what the best do",
+    "the real question is",
+    "have you considered",
+    "based on what I've seen",
+    "in similar situations",
+    "what separates the best",
+    "the cost of inaction",
+    "reframe how you think about"
+]
+
+# Never Split the Difference (Chris Voss) - LIMITED TO <25%
+# Only use sparingly - not the primary methodology
+CHRIS_VOSS_KEYWORDS = [
+    "mirroring", "labeling", "that's right", "calibrated question",
+    "active listening", "counterpart"
 ]
 
 # Jobs to be Done (Ulwick) - Outcome-Driven Innovation
 JTBD_KEYWORDS = [
-    "job to be done", "outcome", "underserved", "overserved", "customer need",
-    "desired outcome", "functional job", "emotional job", "social job",
-    "hiring", "progress", "circumstance", "struggling moment"
+    "job to be done", "outcome", "underserved", "customer need",
+    "desired outcome", "progress", "struggling moment", "hiring"
 ]
 
 # Blue Ocean Strategy - Market Creation
 BLUE_OCEAN_KEYWORDS = [
-    "blue ocean", "red ocean", "value innovation", "make competition irrelevant",
-    "strategy canvas", "eliminate", "reduce", "raise", "create",
-    "uncontested market", "new demand", "buyer value", "cost structure",
-    "noncustomers", "tier", "alternative", "reconstruct"
+    "blue ocean", "value innovation", "make competition irrelevant",
+    "eliminate", "reduce", "raise", "create", "noncustomers"
 ]
 
 # Business Model Generation (Osterwalder) - Canvas Framework
 BUSINESS_MODEL_KEYWORDS = [
-    "value proposition", "customer segment", "channel", "customer relationship",
-    "revenue stream", "key resource", "key activity", "key partnership",
-    "cost structure", "business model canvas", "fit", "pivot",
-    "minimum viable", "prototype", "iterate"
+    "value proposition", "customer segment", "revenue stream",
+    "key resource", "business model canvas"
 ]
 
 
@@ -204,27 +230,38 @@ def compute_reward(
         distance = abs(response_len - target_len) / target_len
         signals['length_appropriate'] = max(0, 1 - distance)
     
-    # 2. Keyword coverage (0-1) - Enhanced with sales books + Abdullah's patterns
-    # Domain-specific keywords
+    # 2. Keyword coverage (0-1) - CHALLENGER SALE PRIORITIZED
+    # Domain-specific keywords (Coperniq product knowledge)
     domain_keywords = MEP_KEYWORDS + COPERNIQ_KEYWORDS + ABDULLAH_DEMO_PHRASES
-    # Sales methodology keywords
-    methodology_keywords = (
-        SALES_KEYWORDS + NEGOTIATION_KEYWORDS +
-        CHRIS_VOSS_KEYWORDS + CHALLENGER_KEYWORDS +
-        JTBD_KEYWORDS + BLUE_OCEAN_KEYWORDS + BUSINESS_MODEL_KEYWORDS
-    )
 
+    # CHALLENGER METHODOLOGY (60%+ weight)
+    challenger_hits = sum(1 for kw in CHALLENGER_KEYWORDS if kw in response_lower)
+    challenger_phrase_hits = sum(1 for phrase in CHALLENGER_PHRASES if phrase in response_lower)
+
+    # Supporting methodologies (40% combined)
+    jtbd_hits = sum(1 for kw in JTBD_KEYWORDS if kw in response_lower)
+    blue_ocean_hits = sum(1 for kw in BLUE_OCEAN_KEYWORDS if kw in response_lower)
+    business_model_hits = sum(1 for kw in BUSINESS_MODEL_KEYWORDS if kw in response_lower)
+
+    # Chris Voss - LIMITED (<25% of methodology weight)
+    voss_hits = sum(1 for kw in CHRIS_VOSS_KEYWORDS if kw in response_lower)
+
+    # Domain (Coperniq product)
     domain_hits = sum(1 for kw in domain_keywords if kw in response_lower)
-    methodology_hits = sum(1 for kw in methodology_keywords if kw in response_lower)
 
-    # Bonus for Coperniq-specific terms (shows domain knowledge)
-    coperniq_bonus = sum(0.15 for kw in COPERNIQ_KEYWORDS if kw in response_lower)
-    # Bonus for advanced sales techniques from books
-    technique_bonus = sum(0.1 for kw in (CHRIS_VOSS_KEYWORDS + CHALLENGER_KEYWORDS) if kw in response_lower)
+    # Calculate methodology score with CHALLENGER PRIORITY
+    # Challenger: 60%, Other books: 25%, Chris Voss: 15% max
+    challenger_score = min(1.0, (challenger_hits / 4) * 0.6 + (challenger_phrase_hits * 0.15))
+    other_books_score = min(0.25, (jtbd_hits + blue_ocean_hits + business_model_hits) / 6 * 0.25)
+    voss_score = min(0.15, (voss_hits / 3) * 0.15)  # CAPPED at 15%
 
-    # Weighted: domain (0.6) + methodology (0.4), plus bonuses
-    base_score = (domain_hits / 5) * 0.6 + (methodology_hits / 4) * 0.4
-    signals['keyword_coverage'] = min(1.0, base_score + coperniq_bonus + technique_bonus)
+    methodology_score = challenger_score + other_books_score + voss_score
+
+    # Domain bonus (Coperniq-specific)
+    domain_score = min(0.3, domain_hits / 5 * 0.3)
+
+    signals['keyword_coverage'] = min(1.0, methodology_score + domain_score)
+    signals['challenger_score'] = challenger_score  # Track separately for debugging
     
     # 3. Structure quality (0-1)
     has_structure = 0
