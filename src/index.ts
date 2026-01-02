@@ -32,6 +32,8 @@ import {
   CATEGORY_DEFINITIONS,
 } from './knowledge/index.js';
 import { getRunPodClient, RunPodClient } from './utils/runpod.js';
+import { getCostTracker } from './utils/cost-tracker.js';
+import { getCheckpointManager } from './utils/checkpoint.js';
 
 const execPromise = promisify(exec);
 
@@ -880,6 +882,42 @@ class UnslothServer {
               },
             },
             required: ['dataset_tokens', 'base_model'],
+          },
+        },
+
+        // ================================================================
+        // Cost Tracking Tools
+        // ================================================================
+        {
+          name: 'cost_dashboard',
+          description:
+            'Get GPU cost tracking dashboard with current sessions, daily/weekly/monthly spending, and budget alerts',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+
+        // ================================================================
+        // Checkpoint Management Tools
+        // ================================================================
+        {
+          name: 'checkpoint_resume',
+          description:
+            'List and resume from training checkpoints. Shows all saved checkpoints with job IDs, steps, and timestamps.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              job_id: {
+                type: 'string',
+                description: 'Optional: Filter checkpoints by job ID',
+              },
+              action: {
+                type: 'string',
+                enum: ['list', 'get_latest'],
+                description: 'Action to perform: list all checkpoints or get latest for a job',
+              },
+            },
           },
         },
       ],
@@ -2703,6 +2741,123 @@ except Exception as e:
               );
             } catch (error: any) {
               throw new Error(`Error estimating cost: ${error.message}`);
+            }
+          }
+
+          // ================================================================
+          // Cost Tracking Tools
+          // ================================================================
+
+          case 'cost_dashboard': {
+            try {
+              const tracker = getCostTracker();
+              const dashboard = tracker.getDashboard();
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    dashboard: {
+                      activeSessions: dashboard.current_sessions,
+                      todayCost: dashboard.today_cost,
+                      weekCost: dashboard.week_cost,
+                      monthCost: dashboard.month_cost,
+                      budgetStatus: dashboard.budget_status,
+                      activeAlerts: dashboard.active_alerts,
+                      summary: `Today: $${dashboard.today_cost.toFixed(2)} | Week: $${dashboard.week_cost.toFixed(2)} | Month: $${dashboard.month_cost.toFixed(2)}`,
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error getting cost dashboard: ${error.message}`);
+            }
+          }
+
+          // ================================================================
+          // Checkpoint Management Tools
+          // ================================================================
+
+          case 'checkpoint_resume': {
+            const { job_id, action = 'list' } = args as {
+              job_id?: string;
+              action?: 'list' | 'get_latest';
+            };
+
+            try {
+              const manager = getCheckpointManager();
+
+              if (action === 'get_latest' && job_id) {
+                const latest = await manager.getLatestCheckpoint(job_id);
+                if (!latest) {
+                  return this.createSuccessResponse(
+                    name,
+                    startTime,
+                    JSON.stringify({
+                      success: false,
+                      message: `No checkpoints found for job: ${job_id}`,
+                    })
+                  );
+                }
+                return this.createSuccessResponse(
+                  name,
+                  startTime,
+                  JSON.stringify(
+                    {
+                      success: true,
+                      checkpoint: latest,
+                      resumeCommand:
+                        latest.resume_command || `Resume training from checkpoint ${latest.id}`,
+                    },
+                    null,
+                    2
+                  )
+                );
+              }
+
+              // List all checkpoints
+              const checkpoints = await manager.listCheckpoints(job_id);
+              const stats = await manager.getStats();
+
+              return this.createSuccessResponse(
+                name,
+                startTime,
+                JSON.stringify(
+                  {
+                    success: true,
+                    checkpoints: checkpoints.map(
+                      (cp: {
+                        id: string;
+                        training_job_id: string;
+                        version: number;
+                        created_at: string;
+                        size_mb: number;
+                      }) => ({
+                        id: cp.id,
+                        jobId: cp.training_job_id,
+                        version: cp.version,
+                        createdAt: cp.created_at,
+                        sizeMb: cp.size_mb,
+                      })
+                    ),
+                    stats: {
+                      totalCheckpoints: stats.total_checkpoints,
+                      totalSizeMb: stats.total_size_mb,
+                      oldestCheckpoint: stats.oldest_checkpoint,
+                      newestCheckpoint: stats.newest_checkpoint,
+                    },
+                    summary: `Found ${checkpoints.length} checkpoint(s)${job_id ? ` for job ${job_id}` : ''}`,
+                  },
+                  null,
+                  2
+                )
+              );
+            } catch (error: any) {
+              throw new Error(`Error with checkpoints: ${error.message}`);
             }
           }
 

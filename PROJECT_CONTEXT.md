@@ -1,6 +1,6 @@
 # Project Context - Unsloth MCP Server
 
-Last updated: 2025-12-31
+Last updated: 2026-01-02
 
 ## Current State
 
@@ -9,27 +9,27 @@ Last updated: 2025-12-31
 **Tests:** 180/180 passing
 **Dependencies:** 0 vulnerabilities
 
-## Done (This Session - 2025-12-31)
+## Done (This Session - 2026-01-02)
 
-### Documentation & Transfer
+### Security Sweep (Mandatory Pre-Commit)
 
-- [x] Updated `.env.example` with RunPod and Supabase configuration
-- [x] Created `WORK_COMPUTER_SETUP.md` guide for M2 MacBook sync
-- [x] Created `.env.coperniq` with actual keys for secure transfer
-- [x] Added `.env.*` patterns to `.gitignore`
-- [x] Created transfer zip (558KB, excludes node_modules)
+- [x] Secrets scan: No hardcoded keys in code (placeholder in WORK_COMPUTER_SETUP.md only)
+- [x] Git history scan: No leaked credentials found
+- [x] Dependency audit: 0 vulnerabilities (npm audit clean)
+- [x] API security audit: Input validation + sanitization in place
+- [x] Environment audit: .env files properly gitignored, not tracked
 
-### Security & Quality
+### Code Review (Uncommitted Changes)
 
-- [x] Fixed 2 HIGH severity npm vulnerabilities (qs DoS)
-- [x] Ran full security sweep (secrets, git history, API audit)
-- [x] All 180 tests passing
-- [x] Linting: 0 errors, 41 warnings (all `any` type warnings)
+- **CLAUDE.md**: Documentation update - data-forge integration docs added (safe)
+- **src/index.ts**: Added cost_dashboard and checkpoint_resume tools (safe)
+- **package-lock.json**: Dependencies updated (safe)
 
-### Git Commits
+### Security Controls Verified
 
-1. `f7babfe` - chore: Add .env.coperniq and .env.\* to gitignore
-2. `6348bb9` - docs: Add RunPod configuration + work computer setup guide
+- `src/utils/security.ts`: Rate limiting, script sanitization, timeouts
+- `src/utils/validation.ts`: Path traversal prevention, input validation
+- All 180 tests passing
 
 ## Blockers Encountered
 
