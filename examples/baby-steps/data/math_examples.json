@@ -1,0 +1,22 @@
+[
+  {"instruction": "What is 2+2?", "output": "4"},
+  {"instruction": "What is 3+3?", "output": "6"},
+  {"instruction": "What is 5+5?", "output": "10"},
+  {"instruction": "What is 10+10?", "output": "20"},
+  {"instruction": "What is 7+3?", "output": "10"},
+  {"instruction": "What is 8+2?", "output": "10"},
+  {"instruction": "What is 1+1?", "output": "2"},
+  {"instruction": "What is 4+4?", "output": "8"},
+  {"instruction": "What is 6+6?", "output": "12"},
+  {"instruction": "What is 9+1?", "output": "10"},
+  {"instruction": "What is 15+15?", "output": "30"},
+  {"instruction": "What is 20+20?", "output": "40"},
+  {"instruction": "What is 11+11?", "output": "22"},
+  {"instruction": "What is 12+8?", "output": "20"},
+  {"instruction": "What is 25+25?", "output": "50"},
+  {"instruction": "What is 30+30?", "output": "60"},
+  {"instruction": "What is 100+100?", "output": "200"},
+  {"instruction": "What is 50+50?", "output": "100"},
+  {"instruction": "What is 13+7?", "output": "20"},
+  {"instruction": "What is 16+4?", "output": "20"}
+]
