@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsc && chmod +x build/index.js && chmod +x build/cli.js",
     "start": "node build/index.js",
+    "start:minimal": "node build/minimal-server.js",
     "dev": "ts-node src/index.ts",
+    "dev:minimal": "ts-node src/minimal-server.ts",
     "cli": "ts-node src/cli.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
