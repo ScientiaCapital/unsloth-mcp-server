@@ -5,7 +5,7 @@ export interface ProgressUpdate {
   progress: number; // 0-1
   message: string;
   eta?: number; // seconds
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 export type ProgressCallback = (update: ProgressUpdate) => void;
@@ -44,8 +44,9 @@ class ProgressTracker {
       cbs.forEach((cb) => {
         try {
           cb(update);
-        } catch (error: any) {
-          logger.error('Progress callback error', { error: error.message });
+        } catch (error: unknown) {
+          const msg = error instanceof Error ? error.message : String(error);
+          logger.error('Progress callback error', { error: msg });
         }
       });
     }
@@ -137,7 +138,7 @@ export function parseProgress(output: string): ProgressUpdate | null {
         message: data.message,
         eta: data.eta,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }

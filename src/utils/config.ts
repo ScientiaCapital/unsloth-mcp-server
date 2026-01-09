@@ -54,7 +54,7 @@ const DEFAULT_CONFIG: ServerConfig = {
   server: {
     name: 'unsloth-server',
     version: '2.0.1',
-    environment: (process.env.NODE_ENV as any) || 'development',
+    environment: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
   },
 
   logging: {
@@ -117,8 +117,9 @@ class ConfigManager {
           this.mergeConfig(fileConfig);
           logger.info(`Loaded configuration from ${configPath}`);
           break;
-        } catch (error: any) {
-          logger.warn(`Failed to load config from ${configPath}`, { error: error.message });
+        } catch (error: unknown) {
+          const msg = error instanceof Error ? error.message : String(error);
+          logger.warn(`Failed to load config from ${configPath}`, { error: msg });
         }
       }
     }
@@ -195,8 +196,8 @@ class ConfigManager {
     return this.config.security;
   }
 
-  set(key: keyof ServerConfig, value: any): void {
-    this.config[key] = { ...this.config[key], ...value };
+  set<K extends keyof ServerConfig>(key: K, value: Partial<ServerConfig[K]>): void {
+    this.config[key] = { ...this.config[key], ...value } as ServerConfig[K];
     this.validateConfig();
   }
 

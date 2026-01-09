@@ -12,7 +12,7 @@ interface CacheEntry<T> {
 }
 
 class Cache {
-  private memoryCache: Map<string, CacheEntry<any>>;
+  private memoryCache: Map<string, CacheEntry<unknown>>;
   private cacheDir: string;
   private enabled: boolean;
   private defaultTTL: number;
@@ -51,7 +51,7 @@ class Cache {
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 
-  private isExpired(entry: CacheEntry<any>): boolean {
+  private isExpired(entry: CacheEntry<unknown>): boolean {
     const age = (Date.now() - entry.timestamp) / 1000; // age in seconds
     return age > entry.ttl;
   }
@@ -80,14 +80,15 @@ class Cache {
               unlinkSync(filePath);
               logger.debug('Removed expired cache file', { file });
             }
-          } catch (error) {
+          } catch {
             // Invalid cache file, remove it
             unlinkSync(filePath);
           }
         }
       }
-    } catch (error: any) {
-      logger.warn('Failed to cleanup cache directory', { error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn('Failed to cleanup cache directory', { error: msg });
     }
   }
 
@@ -125,8 +126,9 @@ class Cache {
       const filePath = join(this.cacheDir, `${cacheKey}.cache`);
       writeFileSync(filePath, JSON.stringify(entry), 'utf-8');
       logger.debug('Cache entry stored', { key: cacheKey, ttl: entry.ttl });
-    } catch (error: any) {
-      logger.warn('Failed to write cache to disk', { key: cacheKey, error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn('Failed to write cache to disk', { key: cacheKey, error: msg });
     }
   }
 
@@ -160,8 +162,9 @@ class Cache {
           logger.debug('Cache entry expired', { key: cacheKey });
         }
       }
-    } catch (error: any) {
-      logger.warn('Failed to read cache from disk', { key: cacheKey, error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn('Failed to read cache from disk', { key: cacheKey, error: msg });
     }
 
     logger.debug('Cache miss', { key: cacheKey });
@@ -187,8 +190,9 @@ class Cache {
         unlinkSync(filePath);
       }
       logger.debug('Cache entry deleted', { key: cacheKey });
-    } catch (error: any) {
-      logger.warn('Failed to delete cache file', { key: cacheKey, error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn('Failed to delete cache file', { key: cacheKey, error: msg });
     }
   }
 
@@ -207,8 +211,9 @@ class Cache {
         }
       }
       logger.info('Cache cleared');
-    } catch (error: any) {
-      logger.warn('Failed to clear cache directory', { error: error.message });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.warn('Failed to clear cache directory', { error: msg });
     }
   }
 

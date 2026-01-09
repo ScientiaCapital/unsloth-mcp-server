@@ -102,13 +102,14 @@ export async function executePythonWithTimeout(
 
     logger.debug('Python script executed successfully');
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof TimeoutError) {
       logger.error('Python script execution timed out', { timeout });
       throw error;
     }
 
-    logger.error('Python script execution failed', { error: error.message });
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error('Python script execution failed', { error: msg });
     throw error;
   }
 }
@@ -128,11 +129,12 @@ export async function validateFileSize(filePath: string): Promise<void> {
     }
 
     logger.debug('File size validation passed', { filePath, fileSize });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof SecurityError) {
       throw error;
     }
-    logger.warn('Could not validate file size', { filePath, error: error.message });
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.warn('Could not validate file size', { filePath, error: msg });
     // Don't throw - file might not exist yet or stat failed
   }
 }
@@ -202,15 +204,16 @@ export async function safeExecute(
         }
 
         return stdout;
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         if (error instanceof TimeoutError || error instanceof SecurityError) {
           // Don't retry on timeout or security errors
           throw error;
         }
 
-        logger.warn(`Execution attempt ${attempt + 1} failed`, { error: error.message });
+        const msg = error instanceof Error ? error.message : String(error);
+        logger.warn(`Execution attempt ${attempt + 1} failed`, { error: msg });
       }
     }
 

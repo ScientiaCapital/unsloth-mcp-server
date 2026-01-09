@@ -110,7 +110,7 @@ export async function executePythonScript<T = unknown>(
           data,
           stderr: stderr || undefined,
         });
-      } catch (parseError) {
+      } catch {
         resolve({
           success: false,
           error: `Failed to parse output: ${stdout}`,
@@ -193,7 +193,7 @@ export async function executePythonScriptWithProgress<T = unknown>(
           data,
           stderr: stderr || undefined,
         });
-      } catch (parseError) {
+      } catch {
         resolve({
           success: false,
           error: `Failed to parse output: ${stdout}`,

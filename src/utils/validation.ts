@@ -155,7 +155,8 @@ export const validators = {
 };
 
 // Helper to validate and sanitize all inputs
-export function validateToolInputs(toolName: string, args: any): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function validateToolInputs(toolName: string, args: Record<string, any>): void {
   logger.debug(`Validating inputs for tool: ${toolName}`, { args });
 
   try {
