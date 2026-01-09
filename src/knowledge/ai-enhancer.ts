@@ -371,7 +371,7 @@ export interface DifficultyAssessment {
 /**
  * Assess difficulty level of content
  */
-export function assessDifficulty(content: string, category: Category): DifficultyAssessment {
+export function assessDifficulty(content: string, _category: Category): DifficultyAssessment {
   const textLower = content.toLowerCase();
 
   // Expert indicators

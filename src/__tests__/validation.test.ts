@@ -13,7 +13,7 @@ describe('validators', () => {
     });
 
     test('should reject non-string model names', () => {
-      expect(() => validators.modelName(123 as any)).toThrow(ValidationError);
+      expect(() => validators.modelName(123 as unknown as string)).toThrow(ValidationError);
     });
 
     test('should reject very long model names', () => {

@@ -20,7 +20,7 @@ import * as crypto from 'crypto';
 function generateId(): string {
   return crypto.randomUUID();
 }
-import { Category, CATEGORY_DEFINITIONS, TrainingPair } from './schema.js';
+import { Category, TrainingPair } from './schema.js';
 import { SYSTEM_PROMPTS } from './training-generator.js';
 import logger from '../utils/logger.js';
 

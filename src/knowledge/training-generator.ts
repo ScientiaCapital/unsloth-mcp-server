@@ -19,6 +19,12 @@ import logger from '../utils/logger.js';
 
 const execPromise = promisify(exec);
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 // ============================================================================
 // System Prompts for Different Personas
 // ============================================================================
@@ -620,7 +626,7 @@ function generateExplanation(content: string, topic: string, categoryDescription
 /**
  * Calculate quality score for a training pair
  */
-function calculateQualityScore(content: string, query: string): number {
+function calculateQualityScore(content: string, _query: string): number {
   let score = 50; // Base score
 
   // Length checks
@@ -801,8 +807,8 @@ except Exception as e:
       system_prompt: SYSTEM_PROMPTS.trading_expert,
       quality_score: 80, // Synthetic pairs get high base score
     }));
-  } catch (error: any) {
-    logger.warn('Synthetic generation error, using templates', { error: error.message });
+  } catch (error: unknown) {
+    logger.warn('Synthetic generation error, using templates', { error: getErrorMessage(error) });
     return generateTemplatePairs(content, category, numPairs);
   }
 }

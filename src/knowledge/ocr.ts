@@ -18,6 +18,12 @@ import { Category, CATEGORY_DEFINITIONS } from './schema.js';
 
 const execPromise = promisify(exec);
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 export interface OCRResult {
   raw_text: string;
   cleaned_text: string;
@@ -246,8 +252,8 @@ except Exception as e:
       processing_time_ms: 0,
       bounding_boxes: result.bounding_boxes,
     };
-  } catch (error: any) {
-    throw new Error(`Tesseract OCR failed: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`Tesseract OCR failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -342,8 +348,8 @@ except Exception as e:
       processing_time_ms: 0,
       bounding_boxes: result.bounding_boxes,
     };
-  } catch (error: any) {
-    throw new Error(`EasyOCR failed: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`EasyOCR failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -441,8 +447,8 @@ except Exception as e:
       backend_used: 'claude',
       processing_time_ms: 0,
     };
-  } catch (error: any) {
-    throw new Error(`Claude Vision API failed: ${error.message}`);
+  } catch (error: unknown) {
+    throw new Error(`Claude Vision API failed: ${getErrorMessage(error)}`);
   }
 }
 
@@ -546,8 +552,8 @@ export async function processImageBatch(
       const result = await processImage(imagePaths[i], options);
       results.push(result);
       onProgress?.(i + 1, imagePaths.length, result);
-    } catch (error: any) {
-      logger.error(`Failed to process image ${imagePaths[i]}`, { error: error.message });
+    } catch (error: unknown) {
+      logger.error(`Failed to process image ${imagePaths[i]}`, { error: getErrorMessage(error) });
       results.push({
         raw_text: '',
         cleaned_text: '',

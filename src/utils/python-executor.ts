@@ -169,7 +169,10 @@ export async function executePythonScriptWithProgress<T = unknown>(
       stderr += message;
       if (onProgress) {
         // Split by lines and call progress for each
-        message.split('\n').filter((l: string) => l.trim()).forEach(onProgress);
+        message
+          .split('\n')
+          .filter((l: string) => l.trim())
+          .forEach(onProgress);
       }
     });
 
@@ -234,19 +237,25 @@ export async function checkPythonEnvironment(): Promise<{
   try {
     await execPromise('python -c "import unsloth"');
     result.unslothAvailable = true;
-  } catch {}
+  } catch {
+    // Unsloth not installed
+  }
 
   try {
     await execPromise('python -c "import torch"');
     result.torchAvailable = true;
-  } catch {}
+  } catch {
+    // PyTorch not installed
+  }
 
   try {
     const { stdout } = await execPromise(
       'python -c "import torch; print(torch.cuda.is_available())"'
     );
     result.cudaAvailable = stdout.trim() === 'True';
-  } catch {}
+  } catch {
+    // CUDA check failed
+  }
 
   return result;
 }

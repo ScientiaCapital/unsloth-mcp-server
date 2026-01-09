@@ -144,8 +144,12 @@ function showMetrics(): void {
 
   printSection('Overall Statistics');
   console.log(`  Total Calls: ${stats.totalCalls}`);
-  console.log(`  Successful: ${colorize(String(stats.successfulCalls), 'green')} (${Math.round((stats.successfulCalls / stats.totalCalls) * 100)}%)`);
-  console.log(`  Failed: ${colorize(String(stats.failedCalls), 'red')} (${Math.round((stats.failedCalls / stats.totalCalls) * 100)}%)`);
+  console.log(
+    `  Successful: ${colorize(String(stats.successfulCalls), 'green')} (${Math.round((stats.successfulCalls / stats.totalCalls) * 100)}%)`
+  );
+  console.log(
+    `  Failed: ${colorize(String(stats.failedCalls), 'red')} (${Math.round((stats.failedCalls / stats.totalCalls) * 100)}%)`
+  );
 
   if (stats.averageDuration > 0) {
     console.log(`\n  Average Duration: ${stats.averageDuration.toFixed(2)}ms`);
@@ -238,7 +242,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error(colorize('Error:', 'red'), error.message);
   process.exit(1);
 });

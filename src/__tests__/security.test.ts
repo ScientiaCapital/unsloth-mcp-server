@@ -1,4 +1,4 @@
-import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import { sanitizePythonScript, SecurityError, RESOURCE_LIMITS } from '../utils/security.js';
 
 describe('security utilities', () => {

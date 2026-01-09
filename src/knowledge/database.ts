@@ -24,6 +24,12 @@ import logger from '../utils/logger.js';
 
 const execPromise = promisify(exec);
 
+// Helper to extract error message from unknown error type
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 // Default database path
 const DEFAULT_DB_PATH = path.join(process.cwd(), 'data', 'knowledge.db');
 
@@ -78,9 +84,10 @@ print('{"success": true}')
       await execPromise(`python3 -c '${initScript}'`);
       this.initialized = true;
       logger.info('Knowledge database initialized', { path: this.dbPath });
-    } catch (error: any) {
-      logger.error('Failed to initialize knowledge database', { error: error.message });
-      throw new Error(`Database initialization failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error);
+      logger.error('Failed to initialize knowledge database', { error: msg });
+      throw new Error(`Database initialization failed: ${msg}`);
     }
   }
 
@@ -171,8 +178,8 @@ finally:
       }
       logger.info('Knowledge entry added', { id });
       return id;
-    } catch (error: any) {
-      logger.error('Failed to add knowledge entry', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to add knowledge entry', { error: getErrorMessage(error) });
       throw error;
     }
   }
@@ -267,8 +274,8 @@ finally:
         throw new Error(result.error);
       }
       return result.entry;
-    } catch (error: any) {
-      logger.error('Failed to get knowledge entry', { error: error.message, id });
+    } catch (error: unknown) {
+      logger.error('Failed to get knowledge entry', { error: getErrorMessage(error), id });
       throw error;
     }
   }
@@ -357,8 +364,8 @@ finally:
         throw new Error(result.error);
       }
       return result.entries;
-    } catch (error: any) {
-      logger.error('Failed to search knowledge entries', { error: error.message, query });
+    } catch (error: unknown) {
+      logger.error('Failed to search knowledge entries', { error: getErrorMessage(error), query });
       throw error;
     }
   }
@@ -418,8 +425,11 @@ finally:
         throw new Error(result.error);
       }
       return result.entries;
-    } catch (error: any) {
-      logger.error('Failed to list entries by category', { error: error.message, category });
+    } catch (error: unknown) {
+      logger.error('Failed to list entries by category', {
+        error: getErrorMessage(error),
+        category,
+      });
       throw error;
     }
   }
@@ -470,8 +480,8 @@ finally:
       }
       logger.info('Training pair added', { pairId, entryId });
       return pairId;
-    } catch (error: any) {
-      logger.error('Failed to add training pair', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to add training pair', { error: getErrorMessage(error) });
       throw error;
     }
   }
@@ -527,8 +537,8 @@ finally:
         throw new Error(result.error);
       }
       return result.pairs;
-    } catch (error: any) {
-      logger.error('Failed to get training pairs', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to get training pairs', { error: getErrorMessage(error) });
       throw error;
     }
   }
@@ -629,8 +639,8 @@ finally:
         throw new Error(result.error);
       }
       return result.stats;
-    } catch (error: any) {
-      logger.error('Failed to get database stats', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('Failed to get database stats', { error: getErrorMessage(error) });
       throw error;
     }
   }

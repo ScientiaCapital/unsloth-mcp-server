@@ -4,9 +4,7 @@
  * Comprehensive tests for OCR, training generation, AI enhancement, and database
  */
 
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
-import * as fs from 'fs';
-import * as path from 'path';
+import { describe, test, expect } from '@jest/globals';
 
 // Import knowledge module components
 import { classifyContent, cleanText } from '../knowledge/ocr.js';

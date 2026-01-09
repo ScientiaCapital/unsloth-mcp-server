@@ -52,8 +52,7 @@ const SERVER_VERSION = '1.0.0';
 const TOOLS = [
   {
     name: 'check_installation',
-    description:
-      'Verify that Unsloth, PyTorch, and CUDA are properly installed. Run this first!',
+    description: 'Verify that Unsloth, PyTorch, and CUDA are properly installed. Run this first!',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -97,8 +96,7 @@ const TOOLS = [
   },
   {
     name: 'finetune_model',
-    description:
-      'Fine-tune a model using SFT (Supervised Fine-Tuning). REMEMBER: SFT before GRPO!',
+    description: 'Fine-tune a model using SFT (Supervised Fine-Tuning). REMEMBER: SFT before GRPO!',
     inputSchema: {
       type: 'object',
       properties: {
@@ -164,8 +162,7 @@ const TOOLS = [
   },
   {
     name: 'export_model',
-    description:
-      'Export fine-tuned model to GGUF (for Ollama) or merged format (for HuggingFace).',
+    description: 'Export fine-tuned model to GGUF (for Ollama) or merged format (for HuggingFace).',
     inputSchema: {
       type: 'object',
       properties: {
