@@ -29,3 +29,4 @@ models/manifests/
 *.safetensors
 !adapter_config.json
 !tokenizer_config.json
+CLAUDE.md
